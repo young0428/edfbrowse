@@ -1,118 +1,65 @@
-from PyQt5.QtCore import *
-from PyQt5.QtWidgets import *
+import multiprocessing
+import time
+from multiprocessing.managers import BaseManager
+
+class MyManager(BaseManager): pass
 
 
-class MyMainGUI(QDialog):
-    def __init__(self, parent=None):
-        super().__init__(parent)
+def Manager():
+    m = MyManager()
+    m.start()
+    return m 
 
-        self.qtxt1 = QTextEdit(self)
-        self.btn1 = QPushButton("Start", self)
-        self.btn2 = QPushButton("Stop", self)
-        self.btn3 = QPushButton("add 100", self)
-        self.btn4 = QPushButton("send instance", self)
-
-        vbox = QVBoxLayout()
-        vbox.addWidget(self.qtxt1)
-        vbox.addWidget(self.btn1)
-        vbox.addWidget(self.btn2)
-        vbox.addWidget(self.btn3)
-        vbox.addWidget(self.btn4)
-        self.setLayout(vbox)
-
-        self.setGeometry(100, 50, 300, 300)
-
-class Test:
+class Myclass():
     def __init__(self):
-        name = ""
+        self._value = 3
+    def update(self,value):
+        self._value += value
 
+    def p(self,main=None):
+        print('called from main')
+        print(self._value)
 
-class MyMain(MyMainGUI):
-    add_sec_signal = pyqtSignal()
-    send_instance_singal = pyqtSignal("PyQt_PyObject")
-
-    def __init__(self, parent=None):
-        super().__init__(parent)
-
-        self.btn1.clicked.connect(self.time_start)
-        self.btn2.clicked.connect(self.time_stop)
-        self.btn3.clicked.connect(self.add_sec)
-        self.btn4.clicked.connect(self.send_instance)
-
-
-        self.th = Worker(parent=self)
-        self.th.sec_changed.connect(self.time_update)  # custom signal from worker thread to main thread
-
-        self.add_sec_signal.connect(self.th.add_sec)   # custom signal from main thread to worker thread
-        self.send_instance_singal.connect(self.th.recive_instance_singal)
-        self.show()
-
-    @pyqtSlot()
-    def time_start(self):
-        self.th.start()
-        self.th.working = True
-
-
-    @pyqtSlot()
-    def time_stop(self):
-        self.th.working = False
-
-    @pyqtSlot()
-    def add_sec(self):
-        print(".... add singal emit....")
-        self.add_sec_signal.emit()
-
-    @pyqtSlot(str)
-    def time_update(self, msg):
-        self.qtxt1.append(msg)
-
-    @pyqtSlot()
-    def send_instance(self):
-        t1 = Test()
-        t1.name = "SuperPower!!!"
-        self.send_instance_singal.emit(t1)
-
-
-class Worker(QThread):
-    sec_changed = pyqtSignal(str)
-
-    def __init__(self, sec=0, parent=None):
-        super().__init__()
-        self.main = parent
-        self.working = True
-        self.sec = sec
-
-        # self.main.add_sec_signal.connect(self.add_sec)   # 이것도 작동함. # custom signal from main thread to worker thread
-
-    def __del__(self):
-        print(".... end thread.....")
-        self.quit()
-        self.deleteLater()
-
-
-    def run(self):
-        while self.working:
-            self.sec_changed.emit('time (secs)：{}'.format(self.sec))
-            self.sleep(1)
-            self.sec += 1
+def use(mclass,i):
     
-        
-        
+    for j in range(1,101):
+        mclass.update(j)
+        print('process %d'%i,'add %d'%j)
+        mclass.p()
+      
 
-    @pyqtSlot()
-    def add_sec(self):
-        print("add_sec....")
-        self.sec += 100
 
-    @pyqtSlot("PyQt_PyObject")    # @pyqtSlot(object) 도 가능..
-    def recive_instance_singal(self, inst):
-        print(inst.name)
+    print('------------precess %d done-----------'%i)
 
 
 
-if __name__ == "__main__":
-    import sys
 
-    app = QApplication(sys.argv)
-    form = MyMain()
-    app.exec_()
+    return mclass
+
+
+
+MyManager.register('Myclass', Myclass)
+def main():
+    manager = Manager()
+    myclass =manager.Myclass()
+    print(myclass)
+
+    pool = multiprocessing.Pool(multiprocessing.cpu_count())
+    start = time.time()
+    for i in range(10):
+        pool.apply_async(func = use,args=(myclass,i))
+
+    print('---here is main---')
+    myclass.p('nono')
+    print('-------------')
+    pool.close()
+    pool.join()
+
+    print(multiprocessing.cpu_count())
+    print(time.time()-start)
+
+if __name__=='__main__':
+    main()
+
+
+

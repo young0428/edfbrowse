@@ -1,25 +1,21 @@
 import sys
 import types
 import ctypes
+from PyQt5.QtCore import *
+from PyQt5.QtGui import *
+from PyQt5.QtWidgets import *
 import pyqtgraph as pg
 import win32api
 import win32con
 import win32gui
 import time
-import multiprocessing
+from ctypes.wintypes import POINT
 import ctypes.wintypes
 import numpy as np
+from functools import partial
 import math
 
-from PyQt5.QtCore import *
-from PyQt5.QtGui import *
-from PyQt5.QtWidgets import *
-from multiprocessing.managers import BaseManager
-from ctypes.wintypes import POINT
-from functools import partial
-
 import Menuaction
-
 
 
 class childframe(QWidget):
@@ -155,6 +151,7 @@ def mkSignalWindow(self):
 								minYRange = (self.parent.Ch_num-1)*100+200,maxYRange=(self.parent.Ch_num-1)*100+200
 								,minXRange=self.parent.Frequency*0.1,maxXRange=self.parent.Frequency*600)
 	self.parent.Resized = False
+	#print(self.SignalWindow.size().width())
 
 	proxy = QGraphicsProxyWidget()
 	button_left = QPushButton()
@@ -181,6 +178,11 @@ def mkSignalWindow(self):
 	proxy3.setWidget(button_right)
 	proxy4.setWidget(button_right_u)
 
+	
+
+
+
+
 	self.TestButton = self.SignalWindow.addLayout(row=1,col=0)
 	self.TestButton.setMaximumWidth(300)
 	self.TestButton.addItem(proxy)
@@ -188,35 +190,142 @@ def mkSignalWindow(self):
 	self.TestButton.addItem(proxy3)
 	self.TestButton.addItem(proxy4)
 	
+	
+
+
 	self.SignalWindow.show()
 
 	
-	class MyManager(BaseManager): pass
-
-	def Manager():
-		m = MyManager()
-		m.start()
-		return m
-
-	MyManager.register('SignalPlot',self.SignalPlot)
-
-	manager = Manager()
-	self.sigPlot_copy = manager.SignalPlot()
-	pool = multiprocessing.Pool(multiprocessing.cpu_count())
 
 
 
+	#     self.parent.PlotData={'x' = [], 'y' = []}
+	"""
+	class RemoveThread(QThread):
+		def __init__(self,parent=None):
+			super(RemoveThread,self).__init__(parent)
+			self.frame = parent
+			self.offset_per_duration = int(self.frame.parent.Frequency * self.frame.parent.duration)
+		def __del__(self):
+			self.quit()
+			self.deleteLayer()
+		def run(self):
+			#while self.frame.parent.remove:
+			preload_duration_num = math.ceil(self.frame.parent.TimeScale*0.5/self.frame.parent.duration)
+			start = int(self.frame.parent.playtime/self.frame.parent.duration) - preload_duration_num
+			end = math.ceil((self.frame.parent.playtime+self.frame.parent.TimeScale)/(self.frame.parent.duration)) + preload_duration_num
+			for i in range(len(self.frame.parent.ck_load)):
+				if (start > i or end < i) and self.frame.parent.ck_load[i]==1:
+					print('removed!!')
+					for ch in range(self.frame.parent.Ch_num):
+						self.frame.SignalPlot.removeItem(self.frame.parent.plots[i][ch])
+
+					self.frame.parent.ck_load[i] = 0
+			#	self.frame.parent.remove = False
 
 
 
+	class PreloadThread(QThread):
+		def __init__(self,parent=None):
+			super(PreloadThread,self).__init__(parent)
+			self.frame = parent
+			self.offset_per_duration = int(self.frame.parent.Frequency * self.frame.parent.duration)
+		def __del__(self):
+			self.quit()
+			self.deleteLater()
+		def run(self):
+		#	while self.frame.parent.preload:
+			preload_duration_num = math.ceil(self.frame.parent.TimeScale*0.5/self.frame.parent.duration)
+			start = int(self.frame.parent.playtime/self.frame.parent.duration)
+			end = math.ceil((self.frame.parent.playtime+self.frame.parent.TimeScale)/(self.frame.parent.duration))
+			for i in range(preload_duration_num):
+				if start-(i+1) >=0 and self.frame.parent.ck_load[start-(i+1)] == 0:
+					xdata1 = list(range(int((start-(i+1))*self.frame.parent.duration*self.frame.parent.Frequency),
+									int((start-i)*self.frame.parent.duration*self.frame.parent.Frequency)))
+					for ch in range(self.frame.parent.Ch_num):
+						ch_index = self.frame.parent.Selected_Channels_index[ch]
+						ydata1 = self.frame.parent.EDF.readSignal(ch_index,xdata1[0],self.offset_per_duration)
+						print(xdata1,ydata1)
+						self.frame.parent.plots[start-(i+1)].append(self.frame.SignalPlot.plot(xdata1,ydata1+ch*100))
+					self.frame.parent.ck_load[start-(i+1)] = 1
+				
+				if end+i+1 <= len(self.frame.parent.ck_load) and self.frame.parent.ck_load[start-(i+1)] == 0:
+					print('Preload')
+					print(end,i)
+					xdata2 = list(range(int((end+(i))*self.frame.parent.duration*self.frame.parent.Frequency),
+									int((end+(i+1))*self.frame.parent.duration*self.frame.parent.Frequency)))
+					for ch in range(self.frame.parent.Ch_num):
+						print(xdata2)
+						ch_index = self.frame.parent.Selected_Channels_index[ch]
+						ydata2 = self.frame.parent.EDF.readSignal(ch_index,xdata2[0],self.offset_per_duration)
+						print(ydata2)
+						ydata2 = ydata2+ch*100
+						print(ydata2)
+						self.frame.parent.plots[end+i].append(self.frame.SignalPlot.plot(xdata2,ydata2))
+
+					self.frame.parent.ck_load[end+i] = 1
+				#self.frame.parent.preload = False
+	
+
+	class UpdateThread(QThread):
+		def __init__(self,parent=None):
+			super(UpdateThread,self).__init__(parent)
+			self.frame = parent
+			self.i = i
+			self.offset_per_duration = int(self.frame.parent.Frequency * self.frame.parent.duration)
+		
+		def __del__(self):
+			self.quit()
+			self.deleteLater()
+
+		def run(self):
+			#while self.frame.parent.update:
+			start = int(self.frame.parent.playtime/self.frame.parent.duration)
+			end = math.ceil((self.frame.parent.playtime+self.frame.parent.TimeScale)/(self.frame.parent.duration))
+			for i in range(start,end):
+				if self.frame.parent.ck_load[i] == 0:	
+					xdata = list(range(int(i*self.frame.parent.duration * self.frame.parent.Frequency),
+										int((i+1)*self.frame.parent.duration * self.frame.parent.Frequency)))
+					for ch in range(self.frame.parent.Ch_num):
+						ch_index = self.frame.parent.Selected_Channels_index[ch]
+						ydata = self.frame.parent.EDF.readSignal(ch_index,xdata[0],self.offset_per_duration)
+						self.frame.parent.plots[i].append(self.frame.SignalPlot.plot(xdata,ydata+ch*100))
+
+					self.frame.parent.ck_load[i] = 1
+
+				#self.frame.parent.update = False
+
+
+
+
+	"""
 	def PlayTimeUpdated(self):
-		
-		
+		"""
+		if self.parent.btn_click or abs(self.parent.LoadingPivot-self.parent.playtime) >= 600:
+			self.SignalPlot.setXRange(self.parent.playtime*self.parent.Frequency,(self.parent.playtime + self.parent.TimeScale)*self.parent.Frequency,padding=0)
+		if abs(self.parent.LoadingPivot-self.parent.playtime) >= 600:
+			UpdateData(self)
+		"""
+		#self.SignalPlot.setXRange(self.parent.playtime*self.parent.Frequency,(self.parent.playtime+self.parent.TimeScale)*self.parent.Frequency,padding=0)
 		
 
+
+
+
+
+
+
+
+	#def TimeScaleUpdate(self):
 
 	
 	def viewrange_changed(self):
+		#self.frame.parent.update = True
+		#self.frame.parent.preload = True
+		#self.frame.parent.remove = True
+		self.frame.update.start()
+		self.frame.remove.start()
+		self.frame.preload.start()
 		self.frame.parent.TimeScale = ((self.viewRange()[0][1]-self.viewRange()[0][0])/self.frame.parent.Frequency)//self.frame.parent.unit/self.frame.parent.Frequency
 		self.frame.parent.playtime = (self.viewRange()[0][0]/self.frame.parent.Frequency)//self.frame.parent.unit/self.frame.parent.Frequency
 
