@@ -44,7 +44,6 @@ class EDFbrowse(QMainWindow):
 		self.initUI()
 
 
-		
 	@property
 	def Ch_num(self):
 		return self._Ch_num
@@ -80,6 +79,7 @@ class EDFbrowse(QMainWindow):
 	@Ch_num.setter
 	def Ch_num(self,value):
 		self._Ch_num = value
+
 		self.Ch_numChanged.emit()
 
 	@LoadingPivot.setter

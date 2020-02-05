@@ -15,11 +15,12 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from multiprocessing.managers import BaseManager
+from multiprocessing import shared_memory
 from ctypes.wintypes import POINT
 from functools import partial
 
 import Menuaction
-
+class MyManager(BaseManager): pass
 
 
 class childframe(QWidget):
@@ -146,6 +147,8 @@ def mkSignalWindow(self):
 		self.parent.PlotData['x'].append(list(range(0,3*10*60*self.parent.Frequency)))
 		self.parent.PlotData['y'].append(self.parent.EDF.readSignal(self.parent.Selected_Channels_index[i],self.parent.playtime*self.parent.Frequency,3*10*60*self.parent.Frequency)+i*100)
 		self.parent.plotdic[i].setData(self.parent.PlotData['x'][i],self.parent.PlotData['y'][i])
+
+	a = self.parent.plotdic[self.parent.Ch_num-1]
 		
 
 	self.PlotViewBox = self.SignalPlot.getViewBox()
@@ -191,29 +194,31 @@ def mkSignalWindow(self):
 	self.SignalWindow.show()
 
 	
-	class MyManager(BaseManager): pass
+	
 
+	
+	"""
 	def Manager():
 		m = MyManager()
 		m.start()
 		return m
 
-	MyManager.register('SignalPlot',self.SignalPlot)
+	plot = self.SignalPlot
+
+	MyManager.register('SignalPlot',plot)
 
 	manager = Manager()
 	self.sigPlot_copy = manager.SignalPlot()
-	pool = multiprocessing.Pool(multiprocessing.cpu_count())
+	self.pool = multiprocessing.Pool(multiprocessing.cpu_count())
+	"""
+	path = './calc.py'
+	argument = []
 
-
-
-
-
+	newproc = QProcess(self)
+	newproc.start(path,argument)
 
 	def PlayTimeUpdated(self):
-		
-		
-		
-
+		pass
 
 	
 	def viewrange_changed(self):
@@ -247,9 +252,7 @@ def mkSignalWindow(self):
 
 		
 
-	self.remove = RemoveThread(parent = self)
-	self.preload = PreloadThread(parent = self)
-	self.update = UpdateThread(parent=self)
+	
 	
 	#self.update.start()
 	

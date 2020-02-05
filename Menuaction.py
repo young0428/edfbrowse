@@ -20,7 +20,7 @@ def OpenFile(self):
 	self.EDF = edf
 	self.duration = edf.datarecord_duration
 	self.ck_load = [0]*int(edf.datarecords_in_file)
-	self.plots = [[]]*len(self.ck_load)
+	self.plots = [[None]*self.FullCh_num]*len(self.ck_load)
 	self.unit = 1/self.Frequency
 
 
