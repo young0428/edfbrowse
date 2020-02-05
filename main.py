@@ -44,7 +44,6 @@ class EDFbrowse(QMainWindow):
 		self.initUI()
 
 
-		
 	@property
 	def Ch_num(self):
 		return self._Ch_num
@@ -80,6 +79,7 @@ class EDFbrowse(QMainWindow):
 	@Ch_num.setter
 	def Ch_num(self,value):
 		self._Ch_num = value
+
 		self.Ch_numChanged.emit()
 
 	@LoadingPivot.setter
@@ -136,6 +136,7 @@ class EDFbrowse(QMainWindow):
 						if 'frame' in str(child).lower():
 							print(child)
 							self.WindowChildren.append(child)
+							child.setChildWidgetInfo()
 					
 					if not nHittest == win32con.HTCAPTION:
 						
@@ -146,7 +147,7 @@ class EDFbrowse(QMainWindow):
 
 					self.WindowChildren_baseSize = []
 					for WindowChild in self.WindowChildren:
-						self.WindowChildren_baseSize.append([WindowChild.size().width(),WindowChild.size().height()])
+						self.WindowChildren_baseSize.append([WindowChild.size().width(),WindowChild.size().height(),WindowChild.geometry().x(),WindowChild.geometry().y()])
 					
 
 		return False, 0
@@ -163,12 +164,16 @@ class EDFbrowse(QMainWindow):
 		self.Main_y = e.pos().y()
 	
 	"""
+
 	def resizeEvent(self,e):
 		xSizeChangeRatio = (1+(e.size().width() - self.MainSize_x ) / self.MainSize_x)
 		ySizeChangeRatio = (1+(e.size().height() - self.MainSize_y )/ self.MainSize_y)
 		i=0
 		for WindowChild in self.WindowChildren:
-			WindowChild.resize(self.WindowChildren_baseSize[i][0]*xSizeChangeRatio, self.WindowChildren_baseSize[i][1]*ySizeChangeRatio)
+			WindowChild.setGeometry(int(self.WindowChildren_baseSize[i][2]*xSizeChangeRatio),
+									int(self.WindowChildren_baseSize[i][3]*ySizeChangeRatio),
+									self.WindowChildren_baseSize[i][0]*xSizeChangeRatio,
+									self.WindowChildren_baseSize[i][1]*ySizeChangeRatio)
 			i=i+1
 
 	

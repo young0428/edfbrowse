@@ -1,65 +1,17 @@
-import multiprocessing
-import time
-from multiprocessing.managers import BaseManager
+import sys
 
-class MyManager(BaseManager): pass
-
-
-def Manager():
-    m = MyManager()
-    m.start()
-    return m 
-
-class Myclass():
+class test:
     def __init__(self):
-        self._value = 3
-    def update(self,value):
-        self._value += value
-
-    def p(self,main=None):
-        print('called from main')
-        print(self._value)
-
-def use(mclass,i):
-    
-    for j in range(1,101):
-        mclass.update(j)
-        print('process %d'%i,'add %d'%j)
-        mclass.p()
-      
+        self.a = []
 
 
-    print('------------precess %d done-----------'%i)
+a = test()
+a.a.append(1)
+print(sys.getsizeof(a))
+a.a.append(2)
+print(sys.getsizeof(a))
+for i in range(100):
+    a.a.append(i)
 
-
-
-
-    return mclass
-
-
-
-MyManager.register('Myclass', Myclass)
-def main():
-    manager = Manager()
-    myclass =manager.Myclass()
-    print(myclass)
-
-    pool = multiprocessing.Pool(multiprocessing.cpu_count())
-    start = time.time()
-    for i in range(10):
-        pool.apply_async(func = use,args=(myclass,i))
-
-    print('---here is main---')
-    myclass.p('nono')
-    print('-------------')
-    pool.close()
-    pool.join()
-
-    print(multiprocessing.cpu_count())
-    print(time.time()-start)
-
-if __name__=='__main__':
-    main()
-
-
-
+print(sys.getsizeof(a))
+print(a.a)
