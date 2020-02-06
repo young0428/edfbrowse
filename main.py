@@ -110,14 +110,14 @@ class EDFbrowse(QMainWindow):
 		fileMenu = menubar.addMenu('&Tools')
 		fileMenu.addAction(STFTAction)
 		#self.setWindowFlags(Qt.CustomizeWindowHint)
-		self.setWindowTitle('What the EDF!!!')
-		self.screen = QDesktopWidget().screenGeometry()
+		self.setWindowTitle('EDFbrowser')
+		self.screen = QDesktopWidget().availableGeometry()
 		self.resize(self.screen.width(),self.screen.height())
 		self.MainSize_x = self.size().width()
 		self.MainSize_y = self.size().height()
 
 		
-		
+		self.resize(self.screen.width(),self.screen.height())
 		self.showMaximized()
 				
 		#self.SignalWindow.setWindowFlags(Qt.FramelessWindowHint)
@@ -129,7 +129,7 @@ class EDFbrowse(QMainWindow):
 				nHittest = int(msg.wParam)
 				if nHittest in [win32con.HTCAPTION,win32con.HTBOTTOM,win32con.HTBOTTOMLEFT,win32con.HTBOTTOMRIGHT,win32con.HTLEFT,win32con.HTRIGHT,win32con.HTTOP,win32con.HTTOPLEFT,win32con.HTTOPRIGHT]:
 					self.WindowChildren = []
-					self.playtime += 600
+
 
 
 					for child in self.findChildren(QWidget):

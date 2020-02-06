@@ -56,7 +56,7 @@ def detPredBar(parent):
 	parent.win = pg.GraphicsLayoutWidget(parent=parent)
 	parent.win.getPlaytimeChanged = partial(getPlaytimeChanged,parent.win)
 
-	parent.win.setGeometry(start_xpx,start_ypx,parent.geometry().width(),parent.geometry().height())
+	parent.win.setGeometry(start_xpx,start_ypx,parent.geometry().width()+3,parent.geometry().height())
 	
 	parent.lay = parent.win.addLayout(0,0)
 	parent.lay.setBorder()

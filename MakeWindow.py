@@ -124,8 +124,8 @@ def mkSignalWindow(self):
 	self.SignalPlot.setContentsMargins(0, 0, 0, 0)
 	
 	plotstyle = pg.mkPen(color='y',width=1)
-	#self.SignalPlot.hideAxis('left')
-	#self.SignalPlot.hideAxis('bottom')
+	self.SignalPlot.hideAxis('left')
+	self.SignalPlot.hideAxis('bottom')
 	self.SignalPlot.setXRange(0,self.parent.TimeScale*(self.parent.Frequency),padding=0)
 	self.SignalPlot.setYRange(-100,(self.parent.Ch_num-1)*100+100,padding=0)
 	self.SignalPlot.enableAutoRange(axis='xy',enable=False)
@@ -159,10 +159,9 @@ def mkSignalWindow(self):
 
 	proxy = QGraphicsProxyWidget()
 	button_left = QPushButton()
-	button_left.setStyleSheet('image:url(../oneleft.png);border=0px;')
-	#icon_left = QIcon('oneleft.png')
-	#button_left.setIcon(icon_left)
-	
+	icon_left = QIcon('oneleft.png')
+	button_left.setIcon(icon_left)
+
 	proxy2 = QGraphicsProxyWidget()
 	button_right = QPushButton()
 	icon_right = QIcon('oneright.png')
@@ -184,7 +183,7 @@ def mkSignalWindow(self):
 	proxy4.setWidget(button_right_u)
 
 	self.TestButton = self.SignalWindow.addLayout(row=1,col=0)
-	self.TestButton.setMaximumWidth(300)
+	self.TestButton.setMaximumWidth(120)
 	self.TestButton.addItem(proxy)
 	self.TestButton.addItem(proxy2)
 	self.TestButton.addItem(proxy3)
@@ -291,15 +290,17 @@ def mkChannelSelect(self):
 						break
 			
 			self.Main.SignalFrame = childframe(self.Main)
-			self.Main.DPFrame = childframe(self.Main)
 			self.Main.DPNameFrame = childframe(self.Main)
+			self.Main.DPFrame = childframe(self.Main)
 			self.Main.SignalFrame.setGeometry(0,0,self.Main.geometry().width(),self.Main.geometry().height()*0.8)
-			self.Main.DPFrame.setGeometry(self.Main.geometry().width()*2/25,
+			self.Main.DPNameFrame.setGeometry(0,
+											self.Main.geometry().height()*0.8,
+											self.Main.geometry().width()*1/25,
+											self.Main.geometry().height()*0.2)
+			self.Main.DPFrame.setGeometry(self.Main.geometry().width()*1/25,
 										self.Main.geometry().height()*0.8,
-										self.Main.geometry().width()*23/25,
+										self.Main.geometry().width()*24/25,
 										self.Main.geometry().height()*0.2)
-			self.Main.DPNameFrame.setGeometry(0,self.Main.geometry().height()*0.8,self.Main.geometry().width()*2/25,self.Main.geometry().height()*0.2)
-
 			mkSignalWindow(self.Main.SignalFrame)
 			timelinetest.detPredBar(self.Main.DPFrame)
 			timelinetest.dfname(self.Main.DPNameFrame)
