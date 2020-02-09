@@ -1,3 +1,4 @@
+import os
 import sys
 import types
 import ctypes
@@ -6,21 +7,22 @@ import win32api
 import win32con
 import win32gui
 import time
-import multiprocessing
+import multiprocessing as mp
 import ctypes.wintypes
 import numpy as np
 import math
+from UpdatePlot import plotting
 
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
-from multiprocessing.managers import BaseManager
-from multiprocessing import shared_memory
 from ctypes.wintypes import POINT
 from functools import partial
 
+
 import Menuaction
-class MyManager(BaseManager): pass
+def work(fun):
+	fun.add()
 
 
 class childframe(QWidget):
@@ -211,11 +213,11 @@ def mkSignalWindow(self):
 	self.sigPlot_copy = manager.SignalPlot()
 	self.pool = multiprocessing.Pool(multiprocessing.cpu_count())
 	"""
-	path = './calc.py'
-	argument = []
+	
 
-	newproc = QProcess(self)
-	newproc.start(path,argument)
+
+	
+
 
 	def PlayTimeUpdated(self):
 		pass
@@ -250,10 +252,18 @@ def mkSignalWindow(self):
 		self.parent.playtime += self.parent.TimeScale
 		self.parent.btn_click = False
 
+	self.testvalue = 10
+	def plotting_getinitargs(self):
+		return (self.get_country(),)
 		
+	def test(self,obj):
+		for i in range(50001):
+			print(os.getpid(),' ',i);
+			obj.testvalue = obj.testvalue + i
 
-	
-	
+		print(self)
+		print(obj)
+
 	#self.update.start()
 	
 	
@@ -263,6 +273,18 @@ def mkSignalWindow(self):
 	self.move_right = partial(move_right,self)
 	self.move_left_u = partial(move_left_u,self)
 	self.move_right_u = partial(move_right_u,self)
+	self.test = partial(test,self)
+	plotting.__getinitargs__ = plotting_getinitargs
+	a = plotting("plotting",self)
+	
+	pool = mp.Pool(mp.cpu_count())
+	start = time.time()
+	pool.starmap(work,[a])
+	pool.close()
+	pool.join()
+	print(self.testvalue)
+	print('time : ',time.time()-start)
+
 
 	self.PlotViewBox.sigResized.connect(viewbox_resized)
 	self.PlotViewBox.sigXRangeChanged.connect(viewrange_changed)
