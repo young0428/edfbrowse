@@ -9,17 +9,8 @@ import ctypes.wintypes
 import numpy as np
 from functools import partial
 
-playtime = 6000
-timescale = 10
-signum = 6
-
 start_xpx = 0
 start_ypx = 0
-xpx = 1900
-ypx = 200
-in_xpx = xpx - 2*start_xpx
-in_ypx = ypx - 2*start_ypx
-
 
 rand_list=[0,0]
 for i in range(2):
@@ -100,12 +91,10 @@ def detPredBar(parent):
 
 	timeline1 = pg.InfiniteLine(pen=pg.mkPen('y',width=2),
 							   hoverPen=pg.mkPen('y',width=2),
-							   pos=playtime/60,
 							   movable=True)
 
 	timeline2 = pg.InfiniteLine(pen=pg.mkPen('y',width=2),
 							   hoverPen=pg.mkPen('y',width=2),
-							   pos=playtime/60,
 							   movable=True)
 
 	pg.InfLineLabel(timeline1)
@@ -127,7 +116,6 @@ def detPredBar(parent):
 	def mouseClickEvent(self,e):
 		fre = self.parent.parent.Frequency
 		clktime = self.mapSceneToView(e.scenePos()).x()
-		print(clktime)
 		self.timeline.setPos(clktime)
 		
 		self.parent.parent.playtime = clktime*60//(1/fre)*(1/fre)

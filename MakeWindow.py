@@ -27,6 +27,7 @@ class childframe(QWidget):
 		self.parent = parent
 		self.setWindowFlags(Qt.WindowStaysOnTopHint)
 		self.initResized = False
+
 	def setChildWidgetInfo(self):
 		self.ChildrenWidget = []
 
@@ -50,7 +51,6 @@ class childframe(QWidget):
 				if nHittest in [win32con.HTCAPTION,win32con.HTBOTTOM,win32con.HTBOTTOMLEFT,win32con.HTBOTTOMRIGHT,win32con.HTLEFT,win32con.HTRIGHT,win32con.HTTOP,win32con.HTTOPLEFT,win32con.HTTOPRIGHT]:
 					self.setChildWidgetInfo()
 
-					print('Clicked!!')
 		return False, 0
 			
 	def resizeEvent(self,e):
@@ -157,6 +157,8 @@ def mkSignalWindow(self):
 								,minXRange=self.parent.Frequency*0.1,maxXRange=self.parent.Frequency*600)
 	self.parent.Resized = False
 
+
+	# Move event trigger
 	proxy = QGraphicsProxyWidget()
 	button_left = QPushButton()
 	icon_left = QIcon('oneleft.png')
@@ -288,11 +290,13 @@ def mkChannelSelect(self):
 						self.Main.Selected_Channels_index.append(j)
 						self.Main.Selected_Chs.append(i.text())
 						break
-			
+
 			self.Main.SignalFrame = childframe(self.Main)
 			self.Main.DPNameFrame = childframe(self.Main)
 			self.Main.DPFrame = childframe(self.Main)
-			self.Main.SignalFrame.setGeometry(0,0,self.Main.geometry().width(),self.Main.geometry().height()*0.8)
+			self.Main.SignalFrame.setGeometry(0,20,
+											self.Main.geometry().width(),
+											self.Main.geometry().height()*0.8-20)
 			self.Main.DPNameFrame.setGeometry(0,
 											self.Main.geometry().height()*0.8,
 											self.Main.geometry().width()*1/25,
