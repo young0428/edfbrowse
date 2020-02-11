@@ -15,6 +15,6 @@ def get_signal_data(EDF, playtime, timescale, channel_index):
 	
 	signal_data = []
 	for i in channel_index:
-		signal_data.append(EDF.readSignal(i,int(startpt-scale_index_range/2),int(scale_index_range)))
+		signal_data.append(EDF.readSignal(i,int(startpt),int(scale_index_range)))
 
 	return signal_data

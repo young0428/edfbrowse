@@ -16,6 +16,9 @@ from functools import partial
 
 import Menuaction
 import MakeWindow
+import show_fft_function as showfft
+
+
 
 class EDFbrowse(QMainWindow):
 
@@ -43,6 +46,9 @@ class EDFbrowse(QMainWindow):
 		self.remove = False
 		self.initUI()
 
+
+		self.existfft=0
+ 	
 
 	@property
 	def Ch_num(self):
@@ -91,13 +97,13 @@ class EDFbrowse(QMainWindow):
 
 
 	def initUI(self):
-		openAction = QAction(QIcon('exit.png'),'Open',self)
+		openAction = QAction('Open',self)
 		openAction.setShortcut('Ctrl+O')
 		self.OpenFile = types.MethodType(Menuaction.OpenFile,self)
 		openAction.triggered.connect(self.OpenFile)
 
-		STFTAction = QAction('STFT',self)
-		STFTAction.setShortcut('Alt+S')
+		STFTAction = QAction('Powerspectrum',self)
+		STFTAction.setShortcut('Alt+P')
 		self.STFT = types.MethodType(Menuaction.STFT,self)
 		STFTAction.triggered.connect(self.STFT)
 		
@@ -110,14 +116,14 @@ class EDFbrowse(QMainWindow):
 		fileMenu = menubar.addMenu('&Tools')
 		fileMenu.addAction(STFTAction)
 		#self.setWindowFlags(Qt.CustomizeWindowHint)
-		self.setWindowTitle('What the EDF!!!')
-		self.screen = QDesktopWidget().screenGeometry()
+		self.setWindowTitle('EDFbrowser')
+		self.screen = QDesktopWidget().availableGeometry()
 		self.resize(self.screen.width(),self.screen.height())
 		self.MainSize_x = self.size().width()
 		self.MainSize_y = self.size().height()
 
 		
-		
+		self.resize(self.screen.width(),self.screen.height())
 		self.showMaximized()
 				
 		#self.SignalWindow.setWindowFlags(Qt.FramelessWindowHint)
@@ -129,12 +135,11 @@ class EDFbrowse(QMainWindow):
 				nHittest = int(msg.wParam)
 				if nHittest in [win32con.HTCAPTION,win32con.HTBOTTOM,win32con.HTBOTTOMLEFT,win32con.HTBOTTOMRIGHT,win32con.HTLEFT,win32con.HTRIGHT,win32con.HTTOP,win32con.HTTOPLEFT,win32con.HTTOPRIGHT]:
 					self.WindowChildren = []
-					self.playtime += 600
+
 
 
 					for child in self.findChildren(QWidget):
 						if 'frame' in str(child).lower():
-							print(child)
 							self.WindowChildren.append(child)
 							child.setChildWidgetInfo()
 					
@@ -179,18 +184,20 @@ class EDFbrowse(QMainWindow):
 	
 	def on_playtimeChanged(self):
 		self.SignalFrame.PlayTimeUpdated()
-
-
-	#def on_TimeScaleChanged(self):
-
-
-
-
-	
+		
+		#pt = self.showfft.getPlaytimeChanged(self.playtime)
+		#showfft.show_fft(self,ptdata)
+		if self.existfft == 1:
+			showfft.getplaytimechanged(self)
+	def on_TimeScaleChanged(self):
+		#ts = self.showfft.getTimescaleChanged(self.timescale)
+		if self.existfft == 1:
+			showfft.gettimescalechanged(self)
 
 
 if __name__ == '__main__':
    app = QApplication(sys.argv)
    ex = EDFbrowse()
    ex.playtimeChanged.connect(ex.on_playtimeChanged)
+   ex.TimeScaleChanged.connect(ex.on_TimeScaleChanged)
    sys.exit(app.exec_())

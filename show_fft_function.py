@@ -16,6 +16,7 @@ import pyedflib
 from read_edf_function import get_signal_data
 import sys
 import ctypes
+import MakeWindow
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
@@ -24,56 +25,77 @@ import win32con
 import ctypes.wintypes
 import numpy as np
 
-file_name = "C:/Users/dabin/Desktop/EDF/BrainnoEDFfile/brainno05_Fch/Brainno05_1020.edf"
 
-EDF = pyedflib.EdfReader(file_name)
-playtime = 30
-timescale = 10
-signum = 6
-
-signal_name = EDF.getLabel(signum)
+signal_name = 'plz'
 
 start_xpx = 0
 start_ypx = 0
-xpx = 1900
-ypx = 310
+xpx = 1600
+ypx = 250
 in_xpx = xpx - 2*start_xpx
 in_ypx = ypx - 2*start_ypx
 
-def show_fft(parent):
 
-	#signal 원본 데이터
-	def make_data(EDF, playtime, timescale, signum):
-		instant_list = [signum]
-		prefft = get_signal_data(EDF, playtime, timescale, instant_list)
+def getplaytimechanged(self):
+	data = make_data(self,self.EDF)
+	self.plt1.clearPlots()
+	self.maxpsd = max(data.psd)
+	self.plt1.setYRange(0,self.maxpsd)
+	self.plt1.setLimits(minXRange=100,xMin=0,xMax=100,yMin=0,yMax=5+self.maxpsd)
+	self.plt1.plot(data.bins,data.psd,stepMode=True, fillLevel=0, brush=(0,0,0,150),pen=pg.mkPen('g'))
+
+def gettimescalechanged(self):
+	data = make_data(self,self.EDF)
+	self.plt1.clearPlots()
+	self.maxpsd = max(data.psd)
+	self.plt1.setYRange(0,self.maxpsd)
+	self.plt1.setLimits(minXRange=100,xMin=0,xMax=100,yMin=0,yMax=5+self.maxpsd)
+	self.plt1.plot(data.bins,data.psd,stepMode=True, fillLevel=0, brush=(0,0,0,150),pen=pg.mkPen('g'))
+
+class make_data:
+	def __init__(self,main,EDF):
+		self.playtime = main.playtime
+		self.timescale = main.TimeScale
+		self.signum = main.signum
+
+		instant_list = [self.signum]
+		prefft = get_signal_data(EDF, self.playtime, self.timescale, instant_list)
 		del instant_list
 
 		#realnumber fft
 		fft = np.fft.rfft(prefft[0])
-		samplefreq = EDF.getSampleFrequency(signum)
+		samplefreq = EDF.getSampleFrequency(self.signum)
 		n = len(fft)
 		absfft = abs(fft)/(n-1)
-		psd = 2*absfft*absfft
-		bins = np.linspace(0,samplefreq//2,n+1)
 
-		return bins,psd
+		self.psd = 2*absfft*absfft
+		self.bins = np.linspace(0,samplefreq//2,n+1)
 
-	bins,psd = make_data(EDF,playtime,timescale,signum)
-	maxpsd = max(psd)
-
+def show_fft(parent,data):
+	parent.maxpsd = max(data.psd)
+	
 	parent.win = pg.GraphicsLayoutWidget(parent=parent)
+	
 	parent.win.setGeometry(start_xpx,start_ypx,in_xpx,in_ypx)
 	#parent.win.setWindowFlags(Qt.FramelessWindowHint)
-	parent.plt1 = parent.win.addPlot()
-	parent.plt1.showGrid(x=True, y=True,alpha=1)
 	
+	parent.ffttimeleft = pg.AxisItem(orientation='left')
+	parent.ffttimeleft.setGrid(255)
+	parent.ffttimeleft.setPen('#A0A0A0')
+
+	parent.ffttime = pg.AxisItem(orientation='bottom')
+	parent.ffttime.setGrid(255)
+	parent.ffttime.setPen('#A0A0A0')
+
+	parent.plt1 = parent.win.addPlot(axisItems={'left':parent.ffttimeleft,'bottom':parent.ffttime})
+	parent.plt1.showGrid(x=True, y=True,alpha=1)
 	parent.plt1.setLabel('bottom', text='Frequency', units='Hz')
 	parent.plt1.setLabel('left', text='PSD', units='uV^2/Hz')
 	parent.plt1.enableAutoRange(axis='xy', enable=False)
-	parent.plt1.setYRange(0,maxpsd)
-	parent.plt1.setLimits(minXRange=100,xMin=0,xMax=100,yMin=0,yMax=5+maxpsd)
+	parent.plt1.setYRange(0,parent.maxpsd)
+	parent.plt1.setLimits(minXRange=100,xMin=0,xMax=100,yMin=0,yMax=5+parent.maxpsd)
 	parent.plt1.setMouseEnabled(x=False,y=False)
-	parent.plt1.plot(bins,psd,stepMode=True, fillLevel=0, brush=(0,0,0,150),pen=pg.mkPen('g'))
+	parent.plt1.plot(data.bins,data.psd,stepMode=True, fillLevel=0, brush=(0,0,0,150),pen=pg.mkPen('g'))
 
 class MyApp(QWidget):
 
@@ -85,11 +107,9 @@ class MyApp(QWidget):
 		self.initUI()
 
 	def initUI(self):
-		show_fft(self)
+		show_fft(self,make_data)
 
-		self.setWindowTitle(signal_name)
 		self.resize(xpx,ypx)
-		self.win.show()
 		self.show()
 
 	def nativeEvent(self,eventType,message):
@@ -100,11 +120,8 @@ class MyApp(QWidget):
 					if nHittest in [win32con.HTCAPTION,win32con.HTBOTTOM,win32con.HTBOTTOMLEFT,win32con.HTBOTTOMRIGHT,win32con.HTLEFT,win32con.HTRIGHT,win32con.HTTOP,win32con.HTTOPLEFT,win32con.HTTOPRIGHT]:
 						self.WindowChildren = []
 
-
-						print(self.findChildren(QWidget))
 						for child in self.findChildren(QWidget):
 							if 'graphics' in str(child).lower():
-								print(child)
 								self.WindowChildren.append(child)
 						
 						if not nHittest == win32con.HTCAPTION:
