@@ -125,12 +125,12 @@ def mkSignalWindow(self):
 	
 	plotstyle = pg.mkPen(color='y',width=0.7)
 	self.SignalPlot.hideAxis('left')
-	#self.SignalPlot.hideAxis('bottom')
+	self.SignalPlot.hideAxis('bottom')
 	self.SignalPlot.setXRange(0,self.parent.TimeScale*(self.parent.Frequency),padding=0)
 	self.SignalPlot.setYRange(-100,(self.parent.Ch_num-1)*100+100,padding=0)
 	self.SignalPlot.enableAutoRange(axis='xy',enable=False)
 	self.SignalPlot.setMouseEnabled(x=True,y=True)
-	self.SignalPlot.setDownsampling(ds=5,mode='peak')
+	self.SignalPlot.setDownsampling(ds=4,mode='subsample')
 	self.SignalPlot.setClipToView(True)
 
 	#self.SignalPlot.addLine(x=line)
@@ -142,9 +142,12 @@ def mkSignalWindow(self):
 	
 	for i in range(self.parent.Ch_num):
 		self.parent.plotdic.append(self.SignalPlot.plot(pen=plotstyle, name=str(i)))
-		self.parent.PlotData['x'].append(list(range(0,3*10*60*self.parent.Frequency)))
+		self.parent.PlotData['x'].append(list(range(0,2*10*60*self.parent.Frequency)))
 		self.parent.PlotData['y'].append(self.parent.EDF.readSignal(self.parent.Selected_Channels_index[i],self.parent.playtime*self.parent.Frequency,3*10*60*self.parent.Frequency)+i*100)
 		self.parent.plotdic[i].setData(self.parent.PlotData['x'][i],self.parent.PlotData['y'][i])
+		if i==0:
+			self.parent.plotdic[i].start_duration = 0
+			self.parent.plotdic[i].end_duration = int(2*10*60/self.parent.duration)
 
 	a = self.parent.plotdic[self.parent.Ch_num-1]
 		
@@ -200,10 +203,8 @@ def mkSignalWindow(self):
 			self.frame = parent
 
 		def StartUpdate(self,direction):
-			
-			
 			i=0
-			pen = pg.mkPen(color='y',width=0.65)
+			pen = pg.mkPen(width=1)
 			#진행방향 앞쪽
 			if direction == 1:
 				current_duration_index = int((self.frame.parent.playtime)/self.frame.parent.duration)
@@ -223,30 +224,51 @@ def mkSignalWindow(self):
 				end = int(end_duration_index * self.frame.parent.duration * self.frame.parent.Frequency)
 			#진행방향 뒤쪽
 			if direction == 0:
-				current_duration_index = math.ceil((self.frame.parent.playtime+self.frame.parent.TimeScale*0.4)/self.frame.parent.duration)
+				current_duration_index = math.ceil((self.frame.parent.playtime)/self.frame.parent.duration)
 				while True:
 					if self.frame.parent.ck_load[current_duration_index - i] == 0:
 						end_duration_index = current_duration_index - i
 						break
 					i = i +1
-				end = int(end_duration_index * self.frame.parent.duration * self.frame.parent.Frequency)
+				end = math.ceil(end_duration_index * self.frame.parent.duration * self.frame.parent.Frequency)+2
 				if 0 > self.frame.parent.playtime-self.frame.parent.TimeScale:
 					start = 0
 				else:
-					start = int((self.frame.parent.playtime-self.frame.parent.TimeScale) * self.frame.parent.Frequency)
+					start = int((self.frame.parent.playtime-self.frame.parent.TimeScale*2) * self.frame.parent.Frequency)
 				
 				start_duration_index = int(start/(self.frame.parent.Frequency*self.frame.parent.duration))
 				start = int(start_duration_index * self.frame.parent.duration * self.frame.parent.Frequency)
 
+ 			#############################################
 			if start < end:
 				xdata = list(range(start,end))
+
 				for i in range(self.frame.parent.Ch_num):
 					ch_index = self.frame.parent.Selected_Channels_index[i]
-					ydata = list(self.frame.parent.EDF.readSignal(ch_index,start,end-start)+i*100)
-					self.frame.SignalPlot.plot(x = xdata,y = ydata,pen=pen)
-
+					ydata = (list(self.frame.parent.EDF.readSignal(ch_index,start,end-start)+i*100))
+					inst = self.frame.SignalPlot.plot(x = xdata,y = ydata,pen=pen)
+					if i == 0:
+						inst.start_duration = start_duration_index
+						inst.end_duration = end_duration_index
+	
+						
+				
 				for i in range(start_duration_index,end_duration_index):
 					self.frame.parent.ck_load[i] = 1
+			itemlist = self.frame.SignalPlot.listDataItems()
+			for i in range(int(len(itemlist)/self.frame.parent.Ch_num)):
+				a = i*self.frame.parent.Ch_num + 1
+				s = itemlist[a].start_duration
+				e = itemlist[a].end_duration
+				if (e < ((self.frame.parent.playtime - self.frame.parent.TimeScale*2)/self.frame.parent.duration) or 
+					s > ((self.frame.parent.playtime + self.frame.parent.TimeScale*2)/self.frame.parent.duration)):
+					for j in range(self.frame.parent.Ch_num):
+						self.frame.SignalPlot.removeItem(itemlist[a+j])
+					for j in range(s,e):
+						self.frame.parent.ck_load[j] = 0
+
+					
+				
 
 
 	self.UpdatePlotting = Update(self)
@@ -261,16 +283,19 @@ def mkSignalWindow(self):
 	def PlayTimeUpdated(self):
 		
 		if self.parent.btn_click or abs(self.parent.LoadingPivot-self.parent.playtime) >= self.parent.TimeScale:
-			print(self.parent.playtime*self.parent.Frequency)
-			print((self.parent.playtime + self.parent.TimeScale)*self.parent.Frequency)
-			self.SignalPlot.setXRange(self.parent.playtime*self.parent.Frequency,(self.parent.playtime + self.parent.TimeScale)*self.parent.Frequency,padding=0)
+			self.SignalPlot.setXRange(self.parent.playtime*self.parent.Frequency,(self.parent.playtime + self.parent.TimeScale)*self.parent.Frequency,padding=0,update=True)
 		if abs(self.parent.LoadingPivot-self.parent.playtime) >= self.parent.TimeScale:
 			#0 == 진행방향 뒤로 , 1== 진행방향 앞으로
-			if self.parent.LoadingPivot-self.parent.playtime < 0:
-				direction = 1
+			if self.parent.jump:
+				self.UpdatePlotting.StartUpdate(0)
+				self.UpdatePlotting.StartUpdate(1)
+				self.parent.jump=False
 			else:
-				direction = 0
-			self.UpdatePlotting.StartUpdate(direction)
+				if self.parent.LoadingPivot-self.parent.playtime < 0:
+					direction = 1
+				else:
+					direction = 0
+				self.UpdatePlotting.StartUpdate(direction)
 			self.parent.LoadingPivot = self.parent.playtime
 		
 		#self.SignalPlot.setXRange(self.parent.playtime*self.parent.Frequency,(self.parent.playtime+self.parent.TimeScale)*self.parent.Frequency,padding=0)

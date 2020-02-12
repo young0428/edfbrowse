@@ -44,6 +44,7 @@ class EDFbrowse(QMainWindow):
 		self.update = False
 		self.preload = False
 		self.remove = False
+		self.jump = False
 		self.initUI()
 
 
@@ -79,6 +80,8 @@ class EDFbrowse(QMainWindow):
 		if value < 0 :
 			self._playtime = 0
 		else:
+			if abs(value - self._playtime) > self._TimeScale:
+				self.jump = True
 			self._playtime = value
 			self.playtimeChanged.emit()
 
