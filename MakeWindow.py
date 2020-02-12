@@ -123,15 +123,15 @@ def mkSignalWindow(self):
 
 	self.SignalPlot.setContentsMargins(0, 0, 0, 0)
 	
-	plotstyle = pg.mkPen(color='y',width=0.7)
+	plotstyle = pg.mkPen(color='y',width=0.6)
 	self.SignalPlot.hideAxis('left')
-	#self.SignalPlot.hideAxis('bottom')
+	self.SignalPlot.hideAxis('bottom')
 	self.SignalPlot.setXRange(0,self.parent.TimeScale*(self.parent.Frequency),padding=0)
 	self.SignalPlot.setYRange(-100,(self.parent.Ch_num-1)*100+100,padding=0)
 	self.SignalPlot.enableAutoRange(axis='xy',enable=False)
 	self.SignalPlot.setMouseEnabled(x=True,y=True)
 	self.SignalPlot.setDownsampling(auto=True,mode='subsample')
-	self.SignalPlot.setClipToView(True)
+	#self.SignalPlot.setClipToView(True)
 
 	#self.SignalPlot.addLine(x=line)
 #	pg.setConfigOption('wheelspin',False)
@@ -143,7 +143,7 @@ def mkSignalWindow(self):
 	for i in range(self.parent.Ch_num):
 		self.parent.plotdic.append(self.SignalPlot.plot(pen=plotstyle, name=str(i)))
 		self.parent.PlotData['x'].append(list(range(0,2*10*60*self.parent.Frequency)))
-		self.parent.PlotData['y'].append(self.parent.EDF.readSignal(self.parent.Selected_Channels_index[i],self.parent.playtime*self.parent.Frequency,3*10*60*self.parent.Frequency)+i*100)
+		self.parent.PlotData['y'].append(self.parent.EDF.readSignal(self.parent.Selected_Channels_index[i],self.parent.playtime*self.parent.Frequency,2*10*60*self.parent.Frequency)+i*100)
 		self.parent.plotdic[i].setData(self.parent.PlotData['x'][i],self.parent.PlotData['y'][i])
 		if i==0:
 			self.parent.plotdic[i].start_duration = 0
@@ -204,7 +204,8 @@ def mkSignalWindow(self):
 
 		def StartUpdate(self,direction):
 			i=0
-			pen = pg.mkPen(width=1)
+			pen = pg.mkPen(color='y',width=0.6)
+			#처음 끝 계산
 			#진행방향 앞쪽
 			if direction == 1:
 				current_duration_index = int((self.frame.parent.playtime)/self.frame.parent.duration)
@@ -237,9 +238,11 @@ def mkSignalWindow(self):
 					start = int((self.frame.parent.playtime-self.frame.parent.TimeScale*2) * self.frame.parent.Frequency)
 				
 				start_duration_index = int(start/(self.frame.parent.Frequency*self.frame.parent.duration))-1
+				if start_duration_index < 0 :
+					start_duration_index = 0
 				start = int(start_duration_index * self.frame.parent.duration * self.frame.parent.Frequency)
 
- 			#############################################
+ 			######################   플로팅   ##########################
 			if start < end:
 				xdata = list(range(start,end))
 
@@ -252,7 +255,7 @@ def mkSignalWindow(self):
 						inst.end_duration = end_duration_index
 	
 						
-				
+			##### 삭제 관리 ####	
 				for i in range(start_duration_index,end_duration_index):
 					self.frame.parent.ck_load[i] = 1
 			itemlist = self.frame.SignalPlot.listDataItems()
@@ -283,6 +286,7 @@ def mkSignalWindow(self):
 	def PlayTimeUpdated(self):
 		
 		if self.parent.btn_click or abs(self.parent.LoadingPivot-self.parent.playtime) >= self.parent.TimeScale:
+			print(self.parent.TimeScale)
 			self.SignalPlot.setXRange(self.parent.playtime*self.parent.Frequency,(self.parent.playtime + self.parent.TimeScale)*self.parent.Frequency,padding=0,update=True)
 		if abs(self.parent.LoadingPivot-self.parent.playtime) >= self.parent.TimeScale:
 			#0 == 진행방향 뒤로 , 1== 진행방향 앞으로
