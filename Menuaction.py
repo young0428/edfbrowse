@@ -6,22 +6,25 @@ import pyedflib
 import MakeWindow
 import time
 
+
 def OpenFile(self):
 	fname = QFileDialog.getOpenFileName(self, 'Open file', './')
 	if fname[0] :
 		if not fname[0][len(fname[0])-4:] == '.edf':
-			sys.stderr.write("Faild to Open")
+			sys.stderr.write("Failed to Open")
 			sys.exit(1)
 
-	edf = pyedflib.EdfReader(fname[0])
 
-	self.FullCh_num = edf.signals_in_file
-	self.Frequency = edf.getSampleFrequency(0)
+	edf = pyedflib.EdfReader(fname[0])
 	self.EDF = edf
-	self.duration = edf.datarecord_duration
-	self.ck_load = [0]*int(edf.datarecords_in_file)
-	self.plots = [[None]*self.FullCh_num]*len(self.ck_load)
-	self.unit = 1/self.Frequency
+	self.FullCh_num = self.EDF.signals_in_file
+	self.Frequency = self.EDF.getSampleFrequency(0)
+	self.duration = self.EDF.datarecord_duration
+	self.manager.frequency = int(self.Frequency)
+	self.manager.duration = float(self.EDF.datarecord_duration)
+	self.manager.ck_load = [0]*int(edf.datarecords_in_file)
+	self.manager.plotdata = [[None]*self.FullCh_num]*edf.datarecords_in_file
+	self.manager.unit = 1/self.Frequency
 
 
 	

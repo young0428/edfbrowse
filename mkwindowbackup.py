@@ -11,19 +11,18 @@ import multiprocessing as mp
 import ctypes.wintypes
 import numpy as np
 import math
-from multiprocessing import Process, Manager
-from multiprocessing.managers import BaseManager
+from UpdatePlot import plotting
 
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
-
-
 from ctypes.wintypes import POINT
 from functools import partial
 
+
 import Menuaction
-import timelinetest
+def work(fun):
+	fun.add()
 
 
 class childframe(QWidget):
@@ -69,9 +68,6 @@ class childframe(QWidget):
 		else:
 			self.setChildWidgetInfo()
 			self.initResized = True
-	
-
-
 
 
 
@@ -142,6 +138,7 @@ def mkSignalWindow(self):
 	self.SignalPlot.setClipToView(True)
 
 	#self.SignalPlot.addLine(x=line)
+#	pg.setConfigOption('wheelspin',False)
 	self.parent.plotdic=[]
 	self.parent.linedic=[]
 	self.parent.PlotData={'x' : [], 'y' : []}
@@ -166,23 +163,22 @@ def mkSignalWindow(self):
 
 	proxy = QGraphicsProxyWidget()
 	button_left = QPushButton()
-	button_left.setStyleSheet('image:url(../oneleft.png);border=0px;')
-	#icon_left = QIcon('oneleft.png')
-	#button_left.setIcon(icon_left)
+	icon_left = QIcon('exit.png')
+	button_left.setIcon(icon_left)
 	
 	proxy2 = QGraphicsProxyWidget()
 	button_right = QPushButton()
-	icon_right = QIcon('oneright.png')
+	icon_right = QIcon('exit.png')
 	button_right.setIcon(icon_right)
 
 	proxy3 = QGraphicsProxyWidget()
 	button_right_u = QPushButton()
-	icon_right_u = QIcon('tworight.png')
+	icon_right_u = QIcon('exit.png')
 	button_right_u.setIcon(icon_right_u)
 
 	proxy4 = QGraphicsProxyWidget()
 	button_left_u = QPushButton()
-	icon_left_u = QIcon('twoleft.png')
+	icon_left_u = QIcon('exit.png')
 	button_left_u.setIcon(icon_left_u)
 	
 	proxy.setWidget(button_left_u)
@@ -199,45 +195,23 @@ def mkSignalWindow(self):
 	
 	self.SignalWindow.show()
 
-	###########      Start manager process        #########
-	"""
-	class DataManage(object):
-		def __init__(self):
-			self.ck_load = 0
-			self.plotdata = 0
-			self.unit = 0
-			self.chanel_num = 0
-			self.run = True
-			self.playtime = 0
-			self.timescale = 60
-	"""
-
-	def data_manage(dmanager):
-		while dmanager.run:
-			print("YESSSSSS!!")
-	print(self.parent.manager)
-	p = Process(target=data_manage,args=[self.parent.manager])
-	p.start()
-	time.sleep(0.1)
-	self.datamanager.run = False
-	p.join()
-
 	
 	
 
 	
 
+
+
+	
 
 
 	def PlayTimeUpdated(self):
-		self.datamanager.playtime = self.frame.parent.playtime
-		self.parent.DPFrame.win.getPlaytimeChanged(self.parent.playtime)
+		pass
+		
 
-
-	# self = button 클래스임
+	
 	def viewrange_changed(self):
 		self.frame.parent.TimeScale = ((self.viewRange()[0][1]-self.viewRange()[0][0])/self.frame.parent.Frequency)//self.frame.parent.unit/self.frame.parent.Frequency
-		self.datamanager.timescale = self.frame.parent.TimeScale
 		self.frame.parent.playtime = (self.viewRange()[0][0]/self.frame.parent.Frequency)//self.frame.parent.unit/self.frame.parent.Frequency
 
 
@@ -264,9 +238,6 @@ def mkSignalWindow(self):
 		self.parent.btn_click = True
 		self.parent.playtime += self.parent.TimeScale
 		self.parent.btn_click = False
-
-
-	#self.update.start()
 	
 	
 
@@ -275,6 +246,7 @@ def mkSignalWindow(self):
 	self.move_right = partial(move_right,self)
 	self.move_left_u = partial(move_left_u,self)
 	self.move_right_u = partial(move_right_u,self)
+
 
 
 	self.PlotViewBox.sigResized.connect(viewbox_resized)
@@ -308,26 +280,14 @@ def mkChannelSelect(self):
 						self.Main.Selected_Channels_index.append(j)
 						self.Main.Selected_Chs.append(i.text())
 						break
-			self.Main.manager.channel_num = len(channels)
-
-
 			
 			self.Main.SignalFrame = childframe(self.Main)
-			self.Main.DPFrame = childframe(self.Main)
-			self.Main.DPNameFrame = childframe(self.Main)
 			self.Main.SignalFrame.setGeometry(0,0,self.Main.geometry().width(),self.Main.geometry().height()*0.8)
-			self.Main.DPFrame.setGeometry(self.Main.geometry().width()*2/25,
-										self.Main.geometry().height()*0.8,
-										self.Main.geometry().width()*23/25,
-										self.Main.geometry().height()*0.2)
-			self.Main.DPNameFrame.setGeometry(0,self.Main.geometry().height()*0.8,self.Main.geometry().width()*2/25,self.Main.geometry().height()*0.2)
-
 			mkSignalWindow(self.Main.SignalFrame)
-			timelinetest.detPredBar(self.Main.DPFrame)
-			timelinetest.dfname(self.Main.DPNameFrame)
+			
 			self.Main.SignalFrame.show()
-			self.Main.DPFrame.show()
-			self.Main.DPNameFrame.show()
+
+			
 			self.close()
 			
 

@@ -2,21 +2,27 @@ import sys
 import types
 import os
 import ctypes
-from PyQt5.QtCore import *
-from PyQt5.QtGui import *
-from PyQt5.QtWidgets import *
+import pyedflib
 import pyqtgraph as pg
 import win32api
 import win32con
 import win32gui
 import time
-from ctypes.wintypes import POINT
+import inspect
 import ctypes.wintypes
 import numpy as np
+
 from functools import partial
+from multiprocessing import Process, Manager
+from multiprocessing.managers import BaseManager,NamespaceProxy
+from PyQt5.QtCore import *
+from PyQt5.QtGui import *
+from PyQt5.QtWidgets import *
+from ctypes.wintypes import POINT
 
 import Menuaction
 import MakeWindow
+
 
 class EDFbrowse(QMainWindow):
 
@@ -24,7 +30,7 @@ class EDFbrowse(QMainWindow):
 	Ch_numChanged = pyqtSignal()
 	playtimeChanged = pyqtSignal()
 
-	def __init__(self,parent=None):
+	def __init__(self,manager,parent=None):
 		super(EDFbrowse,self).__init__(parent)
 		#self.eventType = "windows_generic_MSG"
 		self.Mainpointer = self
@@ -42,6 +48,7 @@ class EDFbrowse(QMainWindow):
 		self.update = False
 		self.preload = False
 		self.remove = False
+		self.manager = manager
 		self.initUI()
 
 
@@ -184,14 +191,44 @@ class EDFbrowse(QMainWindow):
 
 	#def on_TimeScaleChanged(self):
 
+class DataManage(object):
+	def __init__(self):
+		self.ck_load = 0
+		self.plotdata = 0
+		self.unit = 0
+		self.chanel_num = 0
+		self.run = True
+		self.playtime = 0
+		self.timescale = 60
+		self.duration = 0
+		self.Frequency = 0
+class MyManager(BaseManager): pass
+
+class ProxyBase(NamespaceProxy):
+	_exposed_ = ('__getattribute__', '__setattr__', '__delattr__')
+
+class DataManageProxy(ProxyBase): pass
+class edfProxy(ProxyBase): pass
 
 
+def register_proxy(name, cls, proxy):
+	for attr in dir(cls):
+		if inspect.ismethod(getattr(cls, attr)) and not attr.startswith("__"):
+			proxy._exposed_ += (attr,)
+			setattr(proxy, attr, 
+			lambda s: object.__getattribute__(s, '_callmethod')(attr))
+	MyManager.register(name, cls, proxy)
 
-	
+register_proxy('DataManage', DataManage,DataManageProxy)
+register_proxy('EdfReader', pyedflib.EdfReader,edfProxy)
 
 
 if __name__ == '__main__':
    app = QApplication(sys.argv)
-   ex = EDFbrowse()
+   m = MyManager()
+   m.start()
+   datam = m.DataManage()
+   ex = EDFbrowse(datam)
    ex.playtimeChanged.connect(ex.on_playtimeChanged)
+   
    sys.exit(app.exec_())
