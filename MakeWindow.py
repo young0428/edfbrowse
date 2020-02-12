@@ -125,7 +125,7 @@ def mkSignalWindow(self):
 	
 	plotstyle = pg.mkPen(color='y',width=0.7)
 	self.SignalPlot.hideAxis('left')
-	self.SignalPlot.hideAxis('bottom')
+	#self.SignalPlot.hideAxis('bottom')
 	self.SignalPlot.setXRange(0,self.parent.TimeScale*(self.parent.Frequency),padding=0)
 	self.SignalPlot.setYRange(-100,(self.parent.Ch_num-1)*100+100,padding=0)
 	self.SignalPlot.enableAutoRange(axis='xy',enable=False)
@@ -227,16 +227,16 @@ def mkSignalWindow(self):
 				current_duration_index = math.ceil((self.frame.parent.playtime)/self.frame.parent.duration)
 				while True:
 					if self.frame.parent.ck_load[current_duration_index - i] == 0:
-						end_duration_index = current_duration_index - i
+						end_duration_index = current_duration_index - i + 1
 						break
 					i = i +1
-				end = math.ceil(end_duration_index * self.frame.parent.duration * self.frame.parent.Frequency)+2
+				end = math.ceil(end_duration_index * self.frame.parent.duration * self.frame.parent.Frequency)
 				if 0 > self.frame.parent.playtime-self.frame.parent.TimeScale:
 					start = 0
 				else:
 					start = int((self.frame.parent.playtime-self.frame.parent.TimeScale*2) * self.frame.parent.Frequency)
 				
-				start_duration_index = int(start/(self.frame.parent.Frequency*self.frame.parent.duration))
+				start_duration_index = int(start/(self.frame.parent.Frequency*self.frame.parent.duration))-1
 				start = int(start_duration_index * self.frame.parent.duration * self.frame.parent.Frequency)
 
  			#############################################
@@ -259,7 +259,7 @@ def mkSignalWindow(self):
 			for i in range(int(len(itemlist)/self.frame.parent.Ch_num)):
 				a = i*self.frame.parent.Ch_num + 1
 				s = itemlist[a].start_duration
-				e = itemlist[a].end_duration
+				e = itemlist[a].end_duration + 1
 				if (e < ((self.frame.parent.playtime - self.frame.parent.TimeScale*2)/self.frame.parent.duration) or 
 					s > ((self.frame.parent.playtime + self.frame.parent.TimeScale*2)/self.frame.parent.duration)):
 					for j in range(self.frame.parent.Ch_num):
