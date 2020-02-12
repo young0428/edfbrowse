@@ -38,7 +38,7 @@ class EDFbrowse(QMainWindow):
 		self.Frequency = 200
 		self._Ch_num = 20
 		self._playtime = 0
-		self._TimeScale = 120
+		self._TimeScale = 10
 		self._LoadingPivot = 0
 		self.btn_click = False
 		self.update = False
