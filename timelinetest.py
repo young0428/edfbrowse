@@ -12,15 +12,12 @@ from functools import partial
 start_xpx = 0
 start_ypx = 0
 
-rand_list=[0,0]
-for i in range(2):
-	a = []
-	a = [0]*700+[1]*20
-	np.random.shuffle(a)
-	rand_list[i] = a
+dety = [0,1,1,0]
+predy = [1,0,1,1]
 
-dety = rand_list[0]
-predy = rand_list[1]
+def makeDataList(self):
+	dety = self.detData
+	predy = self.predData
 
 lendy = len(dety)
 lenpy = len(predy)
