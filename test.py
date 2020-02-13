@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 from multiprocessing import Process, Manager
 from multiprocessing.managers import BaseManager,NamespaceProxy
 import pyedflib
@@ -78,3 +79,6 @@ if __name__ == '__main__':
    # p.join()
 
 
+=======
+a = [1,2,3,4]
+>>>>>>> ThreadDone

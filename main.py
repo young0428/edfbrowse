@@ -45,13 +45,17 @@ class EDFbrowse(QMainWindow):
 		self.Frequency = 200
 		self._Ch_num = 20
 		self._playtime = 0
-		self._TimeScale = 120
+		self._TimeScale = 10
 		self._LoadingPivot = 0
 		self.btn_click = False
 		self.update = False
 		self.preload = False
 		self.remove = False
+<<<<<<< HEAD
 		self.manager = manager
+=======
+		self.jump = False
+>>>>>>> ThreadDone
 		self.initUI()
 
 
@@ -87,6 +91,8 @@ class EDFbrowse(QMainWindow):
 		if value < 0 :
 			self._playtime = 0
 		else:
+			if abs(value - self._playtime) > self._TimeScale:
+				self.jump = True
 			self._playtime = value
 			self.playtimeChanged.emit()
 
