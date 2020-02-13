@@ -9,25 +9,18 @@ import ctypes.wintypes
 import numpy as np
 from functools import partial
 
-start_xpx = 0
-start_ypx = 0
-
-dety = [0,1,1,0]
-predy = [1,0,1,1]
 
 def makeDataList(self):
-	dety = self.detData
-	predy = self.predData
 
-lendy = len(dety)
-lenpy = len(predy)
-detx = range(lendy+1)
-predx = range(lenpy+1)
+	self.lendy = len(self.detData)
+	self.lenpy = len(self.predData)
+	self.detx = range(self.lendy+1)
+	self.predx = range(self.lenpy+1)
 
 
 def dfname(parent):
 	parent.win = pg.GraphicsLayoutWidget(parent=parent)
-	parent.win.setGeometry(start_xpx,start_ypx,parent.geometry().width(),parent.geometry().height())
+	parent.win.setGeometry(0,0,parent.geometry().width(),parent.geometry().height())
 
 
 def getPlaytimeChanged(self,playtime):
@@ -44,7 +37,7 @@ def detPredBar(parent):
 	parent.win = pg.GraphicsLayoutWidget(parent=parent)
 	parent.win.getPlaytimeChanged = partial(getPlaytimeChanged,parent.win)
 
-	parent.win.setGeometry(start_xpx,start_ypx,parent.geometry().width()+3,parent.geometry().height())
+	parent.win.setGeometry(0,0,parent.geometry().width()+3,parent.geometry().height())
 	
 	parent.lay = parent.win.addLayout(0,0)
 	parent.lay.setBorder()
@@ -52,7 +45,7 @@ def detPredBar(parent):
 	#DetPlot
 	parent.dettime = pg.AxisItem(orientation='bottom')
 	parent.dettime.setScale(1/60)
-	parent.dettime.setTickSpacing(major=1,minor=1/6)
+	parent.dettime.setTickSpacing(major=1,minor=None)
 	parent.dettime.setGrid(255)
 	parent.dettime.setPen('#A0A0A0')
 
@@ -63,8 +56,8 @@ def detPredBar(parent):
 
 	parent.det.enableAutoRange(axis='y', enable=False)
 	parent.det.setMouseEnabled(x=True,y=False)
-	parent.det.setLimits(minXRange=30,minYRange=1,xMin=0,xMax=lendy,yMin=0,yMax=1)
-	parent.det.plot(detx,dety,stepMode=True, fillLevel=0,
+	parent.det.setLimits(minXRange=30,minYRange=1,xMin=0,xMax=parent.parent.lendy,yMin=0,yMax=1)
+	parent.det.plot(parent.parent.detx,parent.parent.detData,stepMode=True, fillLevel=0,
 					brush=(255,0,0,255),pen=pg.mkPen('r'))
 
 	#predictbar
@@ -82,8 +75,8 @@ def detPredBar(parent):
 
 	parent.pred.enableAutoRange(axis='y', enable=False)
 	parent.pred.setMouseEnabled(x=True,y=False)
-	parent.pred.setLimits(minXRange=30,minYRange=1,xMin=0,xMax=lenpy,yMin=0,yMax=1)
-	parent.pred.plot(predx,predy,stepMode=True, fillLevel=0,
+	parent.pred.setLimits(minXRange=30,minYRange=1,xMin=0,xMax=parent.parent.lenpy,yMin=0,yMax=1)
+	parent.pred.plot(parent.parent.predx,parent.parent.predData,stepMode=True, fillLevel=0,
 					brush=(0,150,0,255),pen=pg.mkPen((0,150,0,255)))
 
 	timeline1 = pg.InfiniteLine(pen=pg.mkPen('y',width=2),
