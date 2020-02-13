@@ -259,7 +259,7 @@ def mkSignalWindow(self):
 				for i in range(start_duration_index,end_duration_index):
 					self.frame.parent.ck_load[i] = 1
 			itemlist = self.frame.SignalPlot.listDataItems()
-			for i in range(int(len(itemlist)/self.frame.parent.Ch_num)):
+			for i in range(int(len(itemlist))):
 				a = i*self.frame.parent.Ch_num + 1
 				s = itemlist[a].start_duration
 				e = itemlist[a].end_duration + 1
