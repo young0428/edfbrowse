@@ -130,7 +130,7 @@ def mkSignalWindow(self):
 	self.SignalPlot.setYRange(-100,(self.parent.Ch_num-1)*100+100,padding=0)
 	self.SignalPlot.enableAutoRange(axis='xy',enable=False)
 	self.SignalPlot.setMouseEnabled(x=True,y=True)
-	self.SignalPlot.setDownsampling(auto=True,mode='subsample')
+	self.SignalPlot.setDownsampling(ds=5,auto=False,mode='subsample')
 	#self.SignalPlot.setClipToView(True)
 
 	#self.SignalPlot.addLine(x=line)
@@ -259,7 +259,7 @@ def mkSignalWindow(self):
 				for i in range(start_duration_index,end_duration_index):
 					self.frame.parent.ck_load[i] = 1
 			itemlist = self.frame.SignalPlot.listDataItems()
-			for i in range(int(len(itemlist)/self.frame.parent.Ch_num)):
+			for i in range(int(len(itemlist))):
 				a = i*self.frame.parent.Ch_num + 1
 				s = itemlist[a].start_duration
 				e = itemlist[a].end_duration + 1
