@@ -32,8 +32,8 @@ def dfname(parent):
 	"""
 def getPlaytimeChanged(self,playtime):
 	hour = playtime/60
-	self.detviewbox.timeline.setPos(hour)
-	self.predviewbox.timeline.setPos(hour)
+	self.parent.detviewbox.timeline.setPos(hour)
+	self.parent.predviewbox.timeline.setPos(hour)
 	
 
 

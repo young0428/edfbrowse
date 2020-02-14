@@ -47,7 +47,7 @@ def STFT(self):
 			self.Main.FFTFrame = MakeWindow.childframe(self.Main)
 			self.Main.FFTFrame.setGeometry(start_xpx,start_ypx,xpx,ypx)
 			self.Main.FFTFrame.setWindowFlags(Qt.Window)
-			self.Main.FFTFrame.setWindowTitle(self.Main.EDF.getLabel(self.Main.signum))
+			self.Main.FFTFrame.setWindowTitle("FFT "+self.Main.EDF.getLabel(self.Main.signum))
 
 			showfft.show_fft(self.Main.FFTFrame,showfft.make_data(self.Main,self.Main.EDF))
 			self.Main.FFTFrame.show()

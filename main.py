@@ -18,7 +18,7 @@ import Menuaction
 import MakeWindow
 import show_fft_function as showfft
 import timelinetest as dp
-
+import random
 
 class EDFbrowse(QMainWindow):
 
@@ -48,8 +48,24 @@ class EDFbrowse(QMainWindow):
 		self.jump = False
 		self.viewbox_exist = False
 		self.initUI()
-		self.detData = [0,1,1,0,1]
-		self.predData = [0,0,0,1,1]
+
+		ranlist1 = []
+		for i in range(700):
+			ranlist1.append(0)
+		for i in range(20):
+			ranlist1.append(1)
+		random.shuffle(ranlist1)
+		self.detData = ranlist1
+
+		ranlist2 = []
+		for i in range(700):
+			ranlist2.append(0)
+		for i in range(20):
+			ranlist2.append(1)
+		random.shuffle(ranlist2)
+
+		self.predData = ranlist2
+
 		dp.makeDataList(self)
 		self.existfft=0
  	
