@@ -46,7 +46,7 @@ class EDFbrowse(QMainWindow):
 		self.remove = False
 		self.jump = False
 		self.viewbox_exist = False
-		self.ds = 3
+		self.ds = 4
 		self.initUI()
 		self.existfft=0
  	
@@ -174,7 +174,6 @@ class EDFbrowse(QMainWindow):
 				if nHittest == win32con.VK_CONTROL:
 					if self.viewbox_exist:
 						self.SignalFrame.PlotViewBox.CtrlPress = True
-						print('ddd')
 			if msg.message == win32con.WM_KEYUP:
 				nHittest = int(msg.wParam)
 				if nHittest == win32con.VK_CONTROL:
