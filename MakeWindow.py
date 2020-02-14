@@ -117,15 +117,18 @@ def mkSignalWindow(self):
 	self.SignalWindow.setGeometry(0,0,self.parent.signal_frame_width,self.parent.signal_frame_height)
 	
 	class TimeAxisItem(pg.AxisItem):
-		def __init__(self, *args, **kwargs):
+		def __init__(self, frame,*args, **kwargs):
 			super().__init__(*args, **kwargs)
 			self.setLabel(text='Time(초)', units=None)
 			self.enableAutoSIPrefix(False)
+			self.frame = frame
 
 		def tickStrings(self, values, scale, spacing):
-			return [time.strftime("%H:%M:%S", time.localtime(local_time)) for local_time in values]
+			return ["%d:%d:%.2f"%((local_time/self.frame.parent.Frequency)/3600,((local_time/self.frame.parent.Frequency)%3600)/60,((local_time/self.frame.parent.Frequency)%3600%60)) for local_time in values]
 
-	self.SignalPlot = self.SignalWindow.addPlot(enableMouse=False,row=0,col=0,colspan=9,axisitems={'bottom':TimeAxisItem(orientation='bottom')},
+	self.axisitem = TimeAxisItem(self,orientation='bottom')
+
+	self.SignalPlot = self.SignalWindow.addPlot(enableMouse=False,row=0,col=0,colspan=9,axisItems={'bottom':self.axisitem},
 												border=pg.mkPen(color=(255,255,0,255),width=4))
 
 
