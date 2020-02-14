@@ -116,7 +116,7 @@ def mkSignalWindow(self):
 	self.SignalWindow.setGeometry(0,0,self.parent.signal_frame_width,self.parent.signal_frame_height)
 	
 
-	self.SignalPlot = self.SignalWindow.addPlot(enableMouse=False,row=0,col=0,border=pg.mkPen(color=(255,255,0,255),width=4))
+	self.SignalPlot = self.SignalWindow.addPlot(enableMouse=False,row=0,col=0,colspan=2,border=pg.mkPen(color=(255,255,0,255),width=4))
 
 
 
@@ -153,7 +153,8 @@ def mkSignalWindow(self):
 		if i==0:
 			self.parent.plotdic[i].start_duration = 0
 			self.parent.plotdic[i].end_duration = int(2*10*60/self.parent.duration)
-
+	for i in range(len(self.parent.ck_load)):
+		pass
 	a = self.parent.plotdic[self.parent.Ch_num-1]
 	for i in range(20):
 		line = pg.InfiniteLine(pen=pg.mkPen((255,255,255,70),width=0.8),angle=90,pos=int(i*self.parent.Frequency))
@@ -192,18 +193,42 @@ def mkSignalWindow(self):
 	button_left_u = QPushButton()
 	icon_left_u = QIcon('twoleft.png')
 	button_left_u.setIcon(icon_left_u)
+
+	textproxy = QGraphicsProxyWidget()
+	self.textbox1 = QLineEdit()
+	self.textbox1.resize(100,50)
+
+	self.textbox1.setText(str(self.parent.playtime))
+
+	textproxy2 = QGraphicsProxyWidget()
+	self.textbox2 = QLineEdit()
+	self.textbox2.resize(100,50)
+	self.textbox2.setText("10")
+
+
 	
 	proxy.setWidget(button_left_u)
 	proxy2.setWidget(button_left)
 	proxy3.setWidget(button_right)
 	proxy4.setWidget(button_right_u)
+	textproxy.setWidget(self.textbox1)
+	textproxy2.setWidget(self.textbox2)
 
-	self.TestButton = self.SignalWindow.addLayout(row=1,col=0)
+	self.TestButton = self.SignalWindow.addLayout(row=2,col=0,colspan=1)
 	self.TestButton.setMaximumWidth(120)
+	self.TestButton.setMaximumHeight(40)
 	self.TestButton.addItem(proxy)
 	self.TestButton.addItem(proxy2)
 	self.TestButton.addItem(proxy3)
 	self.TestButton.addItem(proxy4)
+	self.textlayout = self.SignalWindow.addLayout(row=1,col=0)
+	self.textlayout2= self.SignalWindow.addLayout(row=1,col=1)
+	self.textlayout.addItem(textproxy)
+	self.textlayout2.addItem(textproxy2)
+
+	#self.textlayout.setMaximumWidth(100)
+	#self.textlayout2.setMaximumWidth(100)
+
 	
 	self.SignalWindow.show()
 
@@ -409,7 +434,7 @@ def mkSignalWindow(self):
 			self.frame.UpdatePlotting.StartUpdate(1)
 		else:
 			self.frame.parent.TimeScale = cur_TimeScale
-		self.frame.SignalPlot.setDownsampling(ds=3+self.frame.parent.TimeScale//20)
+		self.frame.SignalPlot.setDownsampling(ds=3+self.frame.parent.TimeScale//30)
 		self.frame.parent.playtime = (self.viewRange()[0][0]/self.frame.parent.Frequency)//self.frame.parent.unit/self.frame.parent.Frequency
 
 		
