@@ -19,19 +19,32 @@ def makeDataList(self):
 
 
 def dfname(parent):
+	VLayout = QVBoxLayout()
+	a = QLabel("Detection")
+	a.setStyleSheet('color:white ; background:#333333;')
+	b = QLabel("Prediction")
+	b.setStyleSheet('color:white ; background:#333333;')
+	VLayout.addWidget(a)
+	VLayout.addWidget(b)
+	parent.setLayout(VLayout)
+	
+
+
+	"""
 	win = pg.GraphicsLayoutWidget(parent=parent)
 	win.setGeometry(0,0,parent.geometry().width(),parent.geometry().height())
-	"""
+
 	dettext = pg.TextItem(text="Detection",color=(200,200,200))
 	predtext = pg.TextItem(text="Prediction",color=(200,200,200))
-	
-	detname = addPlot(1,1)
+
+	detname = win.addViewBox(1,1)
 	detname.addItem(dettext)
-	predname = addPlot(2,1)
+	predname = win.addViewBox(2,1)
 	predname.addItem(predtext)
 	"""
+	
 def getPlaytimeChanged(self,playtime):
-	hour = playtime / 3600
+	hour = playtime
 	self.parent.DPFrame.detviewbox.timeline.setPos(hour)
 	self.parent.DPFrame.predviewbox.timeline.setPos(hour)
 	
@@ -48,10 +61,24 @@ def detPredBar(parent):
 	parent.lay = parent.win.addLayout(0,0)
 	parent.lay.setBorder()
 	
+	parent.dettime = pg.AxisItem(orientation='bottom')
+	parent.dettime.setScale(1/3600)
+	parent.dettime.setTickSpacing(major=1,minor=1/6)
+	parent.dettime.setGrid(255)
+	parent.dettime.setPen('#A0A0A0')
+
+	parent.predtime = pg.AxisItem(orientation='bottom')
+	parent.predtime.setScale(1/3600)
+	parent.predtime.setTickSpacing(major=1,minor=1/6)
+	parent.predtime.setGrid(255)
+	parent.predtime.setPen('#A0A0A0')
+
+
+
 
 	#DetectPlot
-	parent.det = parent.lay.addPlot(1,1)
-	
+	parent.det = parent.lay.addPlot(1,1,axisItems={"bottom":parent.dettime})
+
 	parent.det.showAxis('bottom',show=True)
 	parent.det.showAxis('left',show=False)
 
@@ -63,7 +90,7 @@ def detPredBar(parent):
 
 
 	#predictPlot
-	parent.pred = parent.lay.addPlot(2,1)
+	parent.pred = parent.lay.addPlot(2,1,axisItems={"bottom":parent.predtime})
 
 	parent.pred.showAxis('bottom',show=True)
 	parent.pred.showAxis('left',show=False)
@@ -72,7 +99,7 @@ def detPredBar(parent):
 	parent.pred.setMouseEnabled(x=True,y=False)
 	parent.pred.setLimits(minXRange=30,minYRange=1,xMin=0,xMax=parent.parent.lenpy,yMin=0,yMax=1)
 	parent.pred.plot(parent.parent.predx,parent.parent.predData,stepMode=True, fillLevel=0,
-					brush=(0,150,0,255),pen=pg.mkPen((0,150,0,255)))
+					brush=(255,0,0,255),pen=pg.mkPen((0,150,0,255)))
 
 	#Get Viewbox
 	
@@ -86,51 +113,15 @@ def detPredBar(parent):
 							   hoverPen=pg.mkPen('y',width=2),
 							   movable=True)
 	parent.detviewbox.timeline = dettimeline
+	parent.detviewbox.addItem(dettimeline)
 
 	predtimeline = pg.InfiniteLine(pen=pg.mkPen('y',width=2),
 							   hoverPen=pg.mkPen('y',width=2),
 							   movable=True)
 	parent.predviewbox.timeline = predtimeline
-
+	parent.detviewbox.addItem(predtimeline)
 	
-	#Detectbar
-	parent.dettime = pg.AxisItem(orientation='bottom')
-	parent.dettime.setScale(1/3600)
-	parent.dettime.setTickSpacing(major=1,minor=1)
-	parent.dettime.setGrid(255)
-	parent.dettime.setPen('#A0A0A0')
-	parent.detviewbox.addItem(parent.dettime)
-
-	'''
-	parent.secdet = parent.lay.addViewBox(1,1)
-	parent.secdet.showAxis('bottom',show=True)
-	parent.secdet.showAxis('left',show=False)
-	parent.minordettime = pg.AxisItem(orientation='bottom')
-	parent.minordettime.setScale(1%60)
-	parent.minordettime.setTickSpacing(major=None,minor=1)
-	parent.minordettime.setGrid(255)
-	parent.minordettime.setPen('#A0A0A0')
-	parent.secdet.addItem(parent.minordettime)
-	'''
-	#Predictbar
-	parent.predtime = pg.AxisItem(orientation='bottom')
-	parent.predtime.setScale(1/60)
-	parent.predtime.setTickSpacing(major=1/6,minor=1/6)
-	parent.predtime.setGrid(255)
-	parent.predtime.setPen('#A0A0A0')
-	parent.predviewbox.addItem(parent.predtime)
-
-	'''
-	parent.secpred = parent.lay.addViewBox(1,1)
-	parent.secpred.showAxis('bottom',show=True)
-	parent.secpred.showAxis('left',show=False)
-	parent.minorpredtime = pg.AxisItem(orientation='bottom')
-	parent.minorpredtime.setScale(1%60)
-	parent.minorpredtime.setTickSpacing(major=None,minor=1)
-	parent.minorpredtime.setGrid(255)
-	parent.minorpredtime.setPen('#A0A0A0')
-	parent.secpred.addItem(parent.minorpredtime)	
-	'''
+	
 	#InfLabel
 	pg.InfLineLabel(dettimeline)
 	pg.InfLineLabel(predtimeline)
@@ -140,11 +131,11 @@ def detPredBar(parent):
 
 
 	def mouseClickEvent(self,e):
-		fre = self.parent.parent.Frequency
+		fre = self.frame.parent.Frequency
 		clktime = self.mapSceneToView(e.scenePos()).x()
 		self.timeline.setPos(clktime)
 		
-		self.parent.parent.playtime = clktime//(1/fre)*(1/fre)
+		self.frame.parent.playtime = clktime//(1/fre)*(1/fre)
 
 	parent.detviewbox.mouseClickEvent = partial(mouseClickEvent,parent.detviewbox)	
 	parent.predviewbox.mouseClickEvent = partial(mouseClickEvent,parent.predviewbox)

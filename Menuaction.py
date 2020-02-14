@@ -11,7 +11,7 @@ import numpy as np
 import timelinetest as dp
 
 start_xpx = 20
-start_ypx = 20
+start_ypx = 50
 xpx = 1600
 ypx = 250
 

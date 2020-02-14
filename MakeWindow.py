@@ -271,7 +271,6 @@ def mkSignalWindow(self):
 				while True:
 					if self.frame.parent.ck_load[current_duration_index + i] == 0:
 						start_duration_index = current_duration_index + i
-	
 						break
 					i = i +1
 				start = int(start_duration_index * self.frame.parent.duration * self.frame.parent.Frequency)
@@ -394,6 +393,7 @@ def mkSignalWindow(self):
 
 
 	def PlayTimeUpdated(self):
+
 		if self.parent.btn_click or abs(self.parent.LoadingPivot-self.parent.playtime) >= self.parent.TimeScale or (not self.PlotViewBox.CtrlPress):
 			self.SignalPlot.setXRange(self.parent.playtime*self.parent.Frequency,(self.parent.playtime + self.parent.TimeScale)*self.parent.Frequency,padding=0,update=True)
 		if abs(self.parent.LoadingPivot-self.parent.playtime) >= self.parent.TimeScale:
@@ -422,6 +422,7 @@ def mkSignalWindow(self):
 		if abs(cur_TimeScale - self.frame.parent.TimeScale) > 1/self.frame.parent.Frequency*4:
 			if self.frame.parent.TimeScale >= 300 and not self.frame.parent.line_per_time == 120:
 				self.frame.parent.line_per_time = 120
+
 				self.frame.LineUpdatting.lineupdate()
 			elif self.frame.parent.TimeScale >= 90 and not self.frame.parent.line_per_time == 60:
 				self.frame.parent.line_per_time = 60
@@ -429,6 +430,7 @@ def mkSignalWindow(self):
 				self.frame.LineUpdatting.lineupdate()
 			elif self.frame.parent.TimeScale >= 30 and not self.frame.parent.line_per_time == 20:
 				self.frame.parent.line_per_time = 20
+
 				self.frame.LineUpdatting.lineupdate()
 			elif self.frame.parent.TimeScale >= 10 and not self.frame.parent.line_per_time == 5:
 				self.frame.parent.line_per_time = 5
@@ -444,6 +446,7 @@ def mkSignalWindow(self):
 				self.frame.LineUpdatting.lineupdate()
 			elif self.frame.parent.TimeScale >= 0.1 and not self.frame.parent.line_per_time == 0.05:
 				self.frame.parent.line_per_time = 0.05
+
 				self.frame.LineUpdatting.lineupdate()
 		if cur_TimeScale > self.frame.parent.TimeScale + 1/self.frame.parent.Frequency*4:
 			self.frame.parent.TimeScale = cur_TimeScale
@@ -539,11 +542,11 @@ def mkChannelSelect(self):
 											self.Main.geometry().height()*0.8-20)
 			self.Main.DPNameFrame.setGeometry(0,
 											self.Main.geometry().height()*0.8,
-											self.Main.geometry().width()*1/25,
+											self.Main.geometry().width()*1/24,
 											self.Main.geometry().height()*0.2)
-			self.Main.DPFrame.setGeometry(self.Main.geometry().width()*1/25,
+			self.Main.DPFrame.setGeometry(self.Main.geometry().width()*1/24,
 										self.Main.geometry().height()*0.8,
-										self.Main.geometry().width()*24/25,
+										self.Main.geometry().width()*23/24,
 										self.Main.geometry().height()*0.2)
 			mkSignalWindow(self.Main.SignalFrame)
 			timelinetest.detPredBar(self.Main.DPFrame)
