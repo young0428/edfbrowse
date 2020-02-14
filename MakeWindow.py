@@ -134,6 +134,7 @@ def mkSignalWindow(self):
 	self.SignalPlot.enableAutoRange(axis='xy',enable=False)
 	self.SignalPlot.setMouseEnabled(x=True,y=True)
 	self.SignalPlot.setDownsampling(ds = self.ds,auto=False,mode='subsample')
+
 	self.SignalPlot.setClipToView(True)
 
 	#self.SignalPlot.addLine(x=line)

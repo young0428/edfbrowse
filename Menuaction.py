@@ -7,12 +7,10 @@ import MakeWindow
 import time
 import show_fft_function as showfft
 
-start_xpx = 0
-start_ypx = 0
+start_xpx = 20
+start_ypx = 20
 xpx = 1600
 ypx = 250
-in_xpx = xpx - 2*start_xpx
-in_ypx = ypx - 2*start_ypx
 
 def OpenFile(self):
 	fname = QFileDialog.getOpenFileName(self, 'Open file', './')
@@ -45,10 +43,12 @@ def STFT(self):
 			self.Main.existfft = 1
 			self.Main.signum = self.Main.Selected_Channels_index[self.ListWidget.currentRow()]
 			self.Main.FFTFrame = MakeWindow.childframe(self.Main)
-			self.Main.FFTFrame.setWindowTitle('xxxxx')
-			self.Main.FFTFrame.setGeometry(start_xpx,start_ypx,in_xpx,in_ypx)
-			showfft.show_fft(self.Main,showfft.make_data(self.Main.FFTFrame,self.Main.EDF))
-			self.Main.win.show()
+			self.Main.FFTFrame.setGeometry(start_xpx,start_ypx,xpx,ypx)
+			self.Main.FFTFrame.setWindowFlags(Qt.Window)
+			self.Main.FFTFrame.setWindowTitle(self.Main.EDF.getLabel(self.Main.signum))
+
+			showfft.show_fft(self.Main.FFTFrame,showfft.make_data(self.Main,self.Main.EDF))
+			self.Main.FFTFrame.show()
 			
 
 		
