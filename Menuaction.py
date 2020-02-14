@@ -6,6 +6,8 @@ import pyedflib
 import MakeWindow
 import time
 import show_fft_function as showfft
+import pandas as pd
+
 
 start_xpx = 20
 start_ypx = 20

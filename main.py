@@ -46,8 +46,9 @@ class EDFbrowse(QMainWindow):
 		self.remove = False
 		self.jump = False
 		self.initUI()
-
-
+		self.detData = [0,1,1,0,1]
+		self.predData = [0,0,0,1,1]
+		dp.makeDataList(self)
 		self.existfft=0
  	
 
@@ -97,6 +98,7 @@ class EDFbrowse(QMainWindow):
 
 
 	
+
 
 
 	def initUI(self):
