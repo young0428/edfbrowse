@@ -71,6 +71,7 @@ class childframe(QWidget):
 
 
 def mkSignalWindow(self):
+
 	def viewbox_resized(viewbox):
 		if not self.parent.Resized:
 			viewbox_pos_x = viewbox.geometry().x()
@@ -115,8 +116,17 @@ def mkSignalWindow(self):
 	self.SignalWindow.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
 	self.SignalWindow.setGeometry(0,0,self.parent.signal_frame_width,self.parent.signal_frame_height)
 	
+	class TimeAxisItem(pg.AxisItem):
+		def __init__(self, *args, **kwargs):
+			super().__init__(*args, **kwargs)
+			self.setLabel(text='Time(초)', units=None)
+			self.enableAutoSIPrefix(False)
 
-	self.SignalPlot = self.SignalWindow.addPlot(enableMouse=False,row=0,col=0,colspan=9,border=pg.mkPen(color=(255,255,0,255),width=4))
+		def tickStrings(self, values, scale, spacing):
+			return [time.strftime("%H:%M:%S", time.localtime(local_time)) for local_time in values]
+
+	self.SignalPlot = self.SignalWindow.addPlot(enableMouse=False,row=0,col=0,colspan=9,axisitems={'bottom':TimeAxisItem(orientation='bottom')},
+												border=pg.mkPen(color=(255,255,0,255),width=4))
 
 
 
@@ -128,7 +138,7 @@ def mkSignalWindow(self):
 	
 	plotstyle = pg.mkPen(color='y',width=0.6)
 	self.SignalPlot.hideAxis('left')
-	self.SignalPlot.hideAxis('bottom')
+	#self.SignalPlot.hideAxis('bottom')
 	self.SignalPlot.setXRange(0,self.parent.TimeScale*(self.parent.Frequency),padding=0)
 	self.SignalPlot.setYRange(-100,(self.parent.Ch_num-1)*100+100,padding=0)
 	self.SignalPlot.enableAutoRange(axis='xy',enable=False)
@@ -197,14 +207,14 @@ def mkSignalWindow(self):
 
 	textproxy = QGraphicsProxyWidget()
 	self.textbox1 = QLineEdit()
-	self.textbox1.resize(100,50)
-
-	self.textbox1.setText(str(self.parent.playtime))
+	self.textbox1.setAlignment(Qt.AlignCenter)
 
 	textproxy2 = QGraphicsProxyWidget()
 	self.textbox2 = QLineEdit()
-	self.textbox2.resize(100,50)
-	self.textbox2.setText("10")
+	self.textbox2.setAlignment(Qt.AlignCenter)
+	
+	self.textbox1.setText("%d:%d:%.2f"%(self.parent.playtime//3600,(self.parent.playtime%3600)//60,((self.parent.playtime)%3600)%60))
+	self.textbox2.setText("%d:%d:%.2f"%((self.parent.playtime+self.parent.TimeScale)//3600,((self.parent.playtime+self.parent.TimeScale)%3600)//60,((self.parent.playtime+self.parent.TimeScale)%3600)%60))
 
 
 	
@@ -229,9 +239,9 @@ def mkSignalWindow(self):
 	self.spacelayout.setMaximumHeight(40)
 	self.textlayout2= self.SignalWindow.addLayout(row=1,col=8)
 	self.textlayout.setMaximumHeight(40)
-	self.textlayout.setMaximumWidth(50)
+	self.textlayout.setMaximumWidth(100)
 	self.textlayout2.setMaximumHeight(40)
-	self.textlayout2.setMaximumWidth(50)
+	self.textlayout2.setMaximumWidth(100)
 	self.textlayout.addItem(textproxy)
 	self.textlayout2.addItem(textproxy2)
 
@@ -309,6 +319,7 @@ def mkSignalWindow(self):
 					self.frame.SignalPlot.addItem(line)
 					line.time = line_pos
 					line_pos = line_pos + self.frame.parent.line_per_time
+
 
 
 
@@ -400,8 +411,9 @@ def mkSignalWindow(self):
 		
 		#self.SignalPlot.setXRange(self.parent.playtime*self.parent.Frequency,(self.parent.playtime+self.parent.TimeScale)*self.parent.Frequency,padding=0)
 		self.parent.DPFrame.win.getPlaytimeChanged(self.parent.playtime)
-		self.textbox1.setText(str(self.parent.playtime))
-		self.textbox2.setText(str(self.parent.playtime+self.parent.TimeScale))
+		self.textbox1.setText("%d:%d:%.2f"%(self.parent.playtime//3600,(self.parent.playtime%3600)//60,((self.parent.playtime)%3600)%60))
+		self.textbox1.setText("%d:%d:%.2f"%((self.parent.playtime+self.parent.TimeScale)//3600,(self.parent.playtime+self.parent.TimeScale)%3600)//60,
+						((self.parent.playtime+self.parent.TimeScale)%3600)%60)
 
 	# self = button 클래스임
 	def viewrange_changed(self):
