@@ -116,7 +116,7 @@ def mkSignalWindow(self):
 	self.SignalWindow.setGeometry(0,0,self.parent.signal_frame_width,self.parent.signal_frame_height)
 	
 
-	self.SignalPlot = self.SignalWindow.addPlot(enableMouse=False,row=0,col=0,colspan=2,border=pg.mkPen(color=(255,255,0,255),width=4))
+	self.SignalPlot = self.SignalWindow.addPlot(enableMouse=False,row=0,col=0,colspan=9,border=pg.mkPen(color=(255,255,0,255),width=4))
 
 
 
@@ -214,17 +214,24 @@ def mkSignalWindow(self):
 	proxy4.setWidget(button_right_u)
 	textproxy.setWidget(self.textbox1)
 	textproxy2.setWidget(self.textbox2)
-	textproxy.resize(100,50)
 
-	self.TestButton = self.SignalWindow.addLayout(row=2,col=0,colspan=1)
-	self.TestButton.setMaximumWidth(120)
+	self.TestButton = self.SignalWindow.addLayout(row=2,col=0)
+	self.spaceLayout = self.SignalWindow.addLayout(row=2,col=1,colspan=8)
+	self.spaceLayout.setMaximumHeight(40)
 	self.TestButton.setMaximumHeight(40)
+	self.TestButton.setMaximumWidth(160)
 	self.TestButton.addItem(proxy)
 	self.TestButton.addItem(proxy2)
 	self.TestButton.addItem(proxy3)
 	self.TestButton.addItem(proxy4)
 	self.textlayout = self.SignalWindow.addLayout(row=1,col=0)
-	self.textlayout2= self.SignalWindow.addLayout(row=1,col=1)
+	self.spacelayout = self.SignalWindow.addLayout(row=1,col=1,colspan=7)
+	self.spacelayout.setMaximumHeight(40)
+	self.textlayout2= self.SignalWindow.addLayout(row=1,col=8)
+	self.textlayout.setMaximumHeight(40)
+	self.textlayout.setMaximumWidth(50)
+	self.textlayout2.setMaximumHeight(40)
+	self.textlayout2.setMaximumWidth(50)
 	self.textlayout.addItem(textproxy)
 	self.textlayout2.addItem(textproxy2)
 
