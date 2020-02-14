@@ -40,11 +40,13 @@ class EDFbrowse(QMainWindow):
 		self._playtime = 0
 		self._TimeScale = 10
 		self._LoadingPivot = 0
+		self.line_per_time = 1
 		self.btn_click = False
 		self.update = False
 		self.preload = False
 		self.remove = False
 		self.jump = False
+		self.viewbox_exist = False
 		self.initUI()
 		self.detData = [0,1,1,0,1]
 		self.predData = [0,0,0,1,1]
@@ -158,6 +160,17 @@ class EDFbrowse(QMainWindow):
 					self.WindowChildren_baseSize = []
 					for WindowChild in self.WindowChildren:
 						self.WindowChildren_baseSize.append([WindowChild.size().width(),WindowChild.size().height(),WindowChild.geometry().x(),WindowChild.geometry().y()])
+			if msg.message == win32con.WM_KEYDOWN:
+				nHittest = int(msg.wParam)
+				if nHittest == win32con.VK_CONTROL:
+					if self.viewbox_exist:
+						self.SignalFrame.PlotViewBox.CtrlPress = True
+						print('ddd')
+			if msg.message == win32con.WM_KEYUP:
+				nHittest = int(msg.wParam)
+				if nHittest == win32con.VK_CONTROL:
+					if self.viewbox_exist:
+						self.SignalFrame.PlotViewBox.CtrlPress = False
 					
 
 		return False, 0

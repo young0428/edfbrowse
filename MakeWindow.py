@@ -79,7 +79,7 @@ def mkSignalWindow(self):
 
 			margin = (self.SignalPlot.geometry().height() - viewbox_height)/2
 			LabelBox = QVBoxLayout()
-			LabelBox.setContentsMargins(10,5+self.SignalPlot.geometry().y()+margin,0,self.geometry().height()-self.SignalPlot.geometry().height()+margin)
+			LabelBox.setContentsMargins(20,5+self.SignalPlot.geometry().y()+margin,0,self.geometry().height()-self.SignalPlot.geometry().height()+margin)
 			for i in range(self.parent.Ch_num):
 				
 				lbl = QLabel(self.parent.Selected_Chs[i])
@@ -116,11 +116,14 @@ def mkSignalWindow(self):
 	self.SignalWindow.setGeometry(0,0,self.parent.signal_frame_width,self.parent.signal_frame_height)
 	
 
-	self.SignalPlot = self.SignalWindow.addPlot(enableMouse=False,row=0,col=0)
+	self.SignalPlot = self.SignalWindow.addPlot(enableMouse=False,row=0,col=0,colspan=2,border=pg.mkPen(color=(255,255,0,255),width=4))
+
+
+
 	self.SignalPlot.showButtons()
 
 	#self.SignalPlot.setBackground('w')
-
+	self.ds = 3
 	self.SignalPlot.setContentsMargins(0, 0, 0, 0)
 	
 	plotstyle = pg.mkPen(color='y',width=0.6)
@@ -130,7 +133,8 @@ def mkSignalWindow(self):
 	self.SignalPlot.setYRange(-100,(self.parent.Ch_num-1)*100+100,padding=0)
 	self.SignalPlot.enableAutoRange(axis='xy',enable=False)
 	self.SignalPlot.setMouseEnabled(x=True,y=True)
-	self.SignalPlot.setDownsampling(auto=True,mode='subsample')
+	self.SignalPlot.setDownsampling(ds = self.ds,auto=False,mode='subsample')
+
 	self.SignalPlot.setClipToView(True)
 
 	#self.SignalPlot.addLine(x=line)
@@ -142,17 +146,26 @@ def mkSignalWindow(self):
 	
 	for i in range(self.parent.Ch_num):
 		self.parent.plotdic.append(self.SignalPlot.plot(pen=plotstyle, name=str(i)))
-		self.parent.PlotData['x'].append(list(range(0,2*10*60*self.parent.Frequency)))
-		self.parent.PlotData['y'].append(self.parent.EDF.readSignal(self.parent.Selected_Channels_index[i],self.parent.playtime*self.parent.Frequency,2*10*60*self.parent.Frequency)+i*100)
+		self.parent.PlotData['x'].append(list(range(0,20*self.parent.Frequency)))
+		self.parent.PlotData['y'].append(self.parent.EDF.readSignal(self.parent.Selected_Channels_index[i],self.parent.playtime*self.parent.Frequency,20*self.parent.Frequency)+i*100)
+		line = pg.InfiniteLine(pen=pg.mkPen((255,255,255,100),width=1),angle=0,pos=i*100)
+		self.SignalPlot.addItem(line)
 		self.parent.plotdic[i].setData(self.parent.PlotData['x'][i],self.parent.PlotData['y'][i])
 		if i==0:
 			self.parent.plotdic[i].start_duration = 0
 			self.parent.plotdic[i].end_duration = int(2*10*60/self.parent.duration)
-
+	for i in range(len(self.parent.ck_load)):
+		pass
 	a = self.parent.plotdic[self.parent.Ch_num-1]
+	for i in range(20):
+		line = pg.InfiniteLine(pen=pg.mkPen((255,255,255,70),width=0.8),angle=90,pos=int(i*self.parent.Frequency))
+		line.time = i
+		self.SignalPlot.addItem(line)
 		
 
 	self.PlotViewBox = self.SignalPlot.getViewBox()
+	self.parent.viewbox_exist = True
+	self.PlotViewBox.border = pg.mkPen(color=(255,255,255,150),width=0.8)
 	self.PlotViewBox.frame = self
 	
 	self.PlotViewBox.setLimits(xMin=0,yMin=-100,yMax=(self.parent.Ch_num-1)*100+100,
@@ -181,18 +194,42 @@ def mkSignalWindow(self):
 	button_left_u = QPushButton()
 	icon_left_u = QIcon('twoleft.png')
 	button_left_u.setIcon(icon_left_u)
+
+	textproxy = QGraphicsProxyWidget()
+	self.textbox1 = QLineEdit()
+	self.textbox1.resize(100,50)
+
+	self.textbox1.setText(str(self.parent.playtime))
+
+	textproxy2 = QGraphicsProxyWidget()
+	self.textbox2 = QLineEdit()
+	self.textbox2.resize(100,50)
+	self.textbox2.setText("10")
+
+
 	
 	proxy.setWidget(button_left_u)
 	proxy2.setWidget(button_left)
 	proxy3.setWidget(button_right)
 	proxy4.setWidget(button_right_u)
+	textproxy.setWidget(self.textbox1)
+	textproxy2.setWidget(self.textbox2)
 
-	self.TestButton = self.SignalWindow.addLayout(row=1,col=0)
+	self.TestButton = self.SignalWindow.addLayout(row=2,col=0,colspan=1)
 	self.TestButton.setMaximumWidth(120)
+	self.TestButton.setMaximumHeight(40)
 	self.TestButton.addItem(proxy)
 	self.TestButton.addItem(proxy2)
 	self.TestButton.addItem(proxy3)
 	self.TestButton.addItem(proxy4)
+	self.textlayout = self.SignalWindow.addLayout(row=1,col=0)
+	self.textlayout2= self.SignalWindow.addLayout(row=1,col=1)
+	self.textlayout.addItem(textproxy)
+	self.textlayout2.addItem(textproxy2)
+
+	#self.textlayout.setMaximumWidth(100)
+	#self.textlayout2.setMaximumWidth(100)
+
 	
 	self.SignalWindow.show()
 
@@ -206,12 +243,14 @@ def mkSignalWindow(self):
 			i=0
 			pen = pg.mkPen(color='y',width=0.6)
 			#처음 끝 계산
+			
 			#진행방향 앞쪽
 			if direction == 1:
 				current_duration_index = int((self.frame.parent.playtime)/self.frame.parent.duration)
 				while True:
 					if self.frame.parent.ck_load[current_duration_index + i] == 0:
 						start_duration_index = current_duration_index + i
+						print(start_duration_index)
 						break
 					i = i +1
 				start = int(start_duration_index * self.frame.parent.duration * self.frame.parent.Frequency)
@@ -221,23 +260,24 @@ def mkSignalWindow(self):
 				else:
 					end = int((self.frame.parent.playtime+self.frame.parent.TimeScale*2) * self.frame.parent.Frequency)
 				
-				end_duration_index = math.ceil(end/(self.frame.parent.Frequency*self.frame.parent.duration))
-				end = int(end_duration_index * self.frame.parent.duration * self.frame.parent.Frequency)
+				end_duration_index = int(end/(self.frame.parent.Frequency*self.frame.parent.duration))
+				print(end_duration_index)
+				end = int((end_duration_index+1) * self.frame.parent.duration * self.frame.parent.Frequency)
 			#진행방향 뒤쪽
 			if direction == 0:
 				current_duration_index = math.ceil((self.frame.parent.playtime)/self.frame.parent.duration)
 				while True:
 					if self.frame.parent.ck_load[current_duration_index - i] == 0:
-						end_duration_index = current_duration_index - i + 1
+						end_duration_index = current_duration_index - i
 						break
 					i = i +1
-				end = math.ceil(end_duration_index * self.frame.parent.duration * self.frame.parent.Frequency)
+				end = math.ceil((end_duration_index+1) * self.frame.parent.duration * self.frame.parent.Frequency)
 				if 0 > self.frame.parent.playtime-self.frame.parent.TimeScale:
 					start = 0
 				else:
 					start = int((self.frame.parent.playtime-self.frame.parent.TimeScale*2) * self.frame.parent.Frequency)
 				
-				start_duration_index = int(start/(self.frame.parent.Frequency*self.frame.parent.duration))-1
+				start_duration_index = int(start/(self.frame.parent.Frequency*self.frame.parent.duration))
 				if start_duration_index < 0 :
 					start_duration_index = 0
 				start = int(start_duration_index * self.frame.parent.duration * self.frame.parent.Frequency)
@@ -250,43 +290,91 @@ def mkSignalWindow(self):
 					ch_index = self.frame.parent.Selected_Channels_index[i]
 					ydata = (list(self.frame.parent.EDF.readSignal(ch_index,start,end-start)+i*100))
 					inst = self.frame.SignalPlot.plot(x = xdata,y = ydata,pen=pen)
-					if i == 0:
-						inst.start_duration = start_duration_index
-						inst.end_duration = end_duration_index
+					inst.start_duration = start_duration_index
+					inst.end_duration = end_duration_index
+
+				line_start = ((int(start/self.frame.parent.Frequency)//self.frame.parent.line_per_time))*self.frame.parent.line_per_time
+				line_end = (math.ceil(math.ceil(((end)/self.frame.parent.Frequency))/self.frame.parent.line_per_time))*self.frame.parent.line_per_time
+				line_pos = line_start
+				while line_end > line_pos :
+					line = pg.InfiniteLine(pen=pg.mkPen((255,255,255,100),width=0.8),angle=90,pos=line_pos*self.frame.parent.Frequency)
+					self.frame.SignalPlot.addItem(line)
+					line.time = line_pos
+					line_pos = line_pos + self.frame.parent.line_per_time
+
+
+
 	
 						
-			##### 삭제 관리 ####	
-				for i in range(start_duration_index,end_duration_index):
+			
+				for i in range(start_duration_index,end_duration_index+1):
 					self.frame.parent.ck_load[i] = 1
-			itemlist = self.frame.SignalPlot.listDataItems()
+			
+			##### 삭제 ####	
+			itemlist = self.frame.SignalPlot.allChildItems()
 			for i in range(int(len(itemlist))):
-				a = i*self.frame.parent.Ch_num + 1
-				s = itemlist[a].start_duration
-				e = itemlist[a].end_duration + 1
-				if (e < ((self.frame.parent.playtime - self.frame.parent.TimeScale*2)/self.frame.parent.duration) or 
-					s > ((self.frame.parent.playtime + self.frame.parent.TimeScale*2)/self.frame.parent.duration)):
-					for j in range(self.frame.parent.Ch_num):
-						self.frame.SignalPlot.removeItem(itemlist[a+j])
-					for j in range(s,e):
-						self.frame.parent.ck_load[j] = 0
+				if hasattr(itemlist[i],'start_duration'):
+					s = itemlist[i].start_duration
+					e = itemlist[i].end_duration
+					if (e < math.ceil(((self.frame.parent.playtime - self.frame.parent.TimeScale*2)/self.frame.parent.duration)) or 
+						s > ((self.frame.parent.playtime + self.frame.parent.TimeScale*2)/self.frame.parent.duration)):
+						self.frame.SignalPlot.removeItem(itemlist[i])
+						for j in range(s,e+1):
+							self.frame.parent.ck_load[j] = 0
+				if hasattr(itemlist[i],'time'):
+					if (self.frame.parent.playtime - self.frame.parent.TimeScale*2) > itemlist[i].time or (self.frame.parent.playtime + self.frame.parent.TimeScale*3) < itemlist[i].time:
+						self.frame.SignalPlot.removeItem(itemlist[i])
 
 					
-				
+	class LineUpdate(QObject):
+		def __init__(self,parent=None):
+			super(LineUpdate,self).__init__(None)
+			self.frame = parent
+		def lineupdate(self):
+			itemlist = self.frame.SignalPlot.allChildItems()
+			for item in itemlist:
+				if hasattr(item,'time'):
+					self.frame.SignalPlot.removeItem(item)
+
+			start = self.frame.parent.playtime - self.frame.parent.TimeScale
+			if start < 0:
+				start = 0
+			start = (start//self.frame.parent.line_per_time)*self.frame.parent.line_per_time
+			end  = (self.frame.parent.playtime + self.frame.parent.TimeScale*2)
+			if end > self.frame.parent.duration*self.frame.parent.EDF.datarecords_in_file:
+				end = self.frame.parent.duration*self.frame.parent.EDF.datarecords_in_file-1
+			end = (end//self.frame.parent.line_per_time)*self.frame.parent.line_per_time
+			while start < end:
+				line = pg.InfiniteLine(pen=pg.mkPen((255,255,255,100),width=0.8),angle=90,pos=start*self.frame.parent.Frequency)
+				line.time = start
+				self.frame.SignalPlot.addItem(line)
+				start = start + self.frame.parent.line_per_time
+		
+
+
+
+
+
+
+
 
 
 	self.UpdatePlotting = Update(self)
+	self.LineUpdatting = LineUpdate(self)
 	self.UpdateThread = QThread()
+	self.LineThread = QThread()
 	self.UpdatePlotting.moveToThread(self.UpdateThread)
+	self.LineUpdatting.moveToThread(self.LineThread)
 	self.UpdateThread.start()
+	self.LineThread.start()
 
 	
 
 
 
 	def PlayTimeUpdated(self):
-		
-		if self.parent.btn_click or abs(self.parent.LoadingPivot-self.parent.playtime) >= self.parent.TimeScale:
-			print(self.parent.TimeScale)
+		print(self.parent.TimeScale*self.parent.Frequency)
+		if self.parent.btn_click or abs(self.parent.LoadingPivot-self.parent.playtime) >= self.parent.TimeScale or (not self.PlotViewBox.CtrlPress):
 			self.SignalPlot.setXRange(self.parent.playtime*self.parent.Frequency,(self.parent.playtime + self.parent.TimeScale)*self.parent.Frequency,padding=0,update=True)
 		if abs(self.parent.LoadingPivot-self.parent.playtime) >= self.parent.TimeScale:
 			#0 == 진행방향 뒤로 , 1== 진행방향 앞으로
@@ -308,13 +396,49 @@ def mkSignalWindow(self):
 	# self = button 클래스임
 	def viewrange_changed(self):
 		cur_TimeScale = ((self.viewRange()[0][1]-self.viewRange()[0][0])/self.frame.parent.Frequency)//self.frame.parent.unit/self.frame.parent.Frequency
-		if cur_TimeScale > self.frame.parent.TimeScale:
+		if abs(cur_TimeScale - self.frame.parent.TimeScale) > 1/self.frame.parent.Frequency*4:
+			if self.frame.parent.TimeScale >= 300 and not self.frame.parent.line_per_time == 120:
+				self.frame.parent.line_per_time = 120
+				print(self.frame.parent.line_per_time)
+				self.frame.LineUpdatting.lineupdate()
+			elif self.frame.parent.TimeScale >= 90 and not self.frame.parent.line_per_time == 60:
+				self.frame.parent.line_per_time = 60
+				print(self.frame.parent.line_per_time)
+				self.frame.LineUpdatting.lineupdate()
+			elif self.frame.parent.TimeScale >= 30 and not self.frame.parent.line_per_time == 20:
+				self.frame.parent.line_per_time = 20
+				print(self.frame.parent.line_per_time)
+				self.frame.LineUpdatting.lineupdate()
+			elif self.frame.parent.TimeScale >= 10 and not self.frame.parent.line_per_time == 5:
+				self.frame.parent.line_per_time = 5
+				print(self.frame.parent.line_per_time)
+				self.frame.LineUpdatting.lineupdate()
+			elif self.frame.parent.TimeScale >= 3 and not self.frame.parent.line_per_time == 2:
+				self.frame.parent.line_per_time = 2
+				print(self.frame.parent.line_per_time)
+				self.frame.LineUpdatting.lineupdate()
+			elif self.frame.parent.TimeScale >= 1 and not self.frame.parent.line_per_time ==0.5 :
+				self.frame.parent.line_per_time = 0.5
+				print(self.frame.parent.line_per_time)
+				self.frame.LineUpdatting.lineupdate()
+			elif self.frame.parent.TimeScale >= 0.5 and not self.frame.parent.line_per_time == 0.3:
+				self.frame.parent.line_per_time = 0.3
+				print(self.frame.parent.line_per_time)
+				self.frame.LineUpdatting.lineupdate()
+			elif self.frame.parent.TimeScale >= 0.1 and not self.frame.parent.line_per_time == 0.05:
+				self.frame.parent.line_per_time = 0.05
+				print(self.frame.parent.line_per_time)
+				self.frame.LineUpdatting.lineupdate()
+		if cur_TimeScale > self.frame.parent.TimeScale + 1/self.frame.parent.Frequency*4:
 			self.frame.parent.TimeScale = cur_TimeScale
 			self.frame.UpdatePlotting.StartUpdate(0)
 			self.frame.UpdatePlotting.StartUpdate(1)
 		else:
 			self.frame.parent.TimeScale = cur_TimeScale
+		self.frame.SignalPlot.setDownsampling(ds=3+self.frame.parent.TimeScale//30)
 		self.frame.parent.playtime = (self.viewRange()[0][0]/self.frame.parent.Frequency)//self.frame.parent.unit/self.frame.parent.Frequency
+
+		
 
 
 
@@ -340,6 +464,7 @@ def mkSignalWindow(self):
 		self.parent.btn_click = True
 		self.parent.playtime += self.parent.TimeScale
 		self.parent.btn_click = False
+
 
 		
 
