@@ -18,7 +18,6 @@ import Menuaction
 import MakeWindow
 import show_fft_function as showfft
 import timelinetest as dp
-import random
 
 class EDFbrowse(QMainWindow):
 
@@ -47,26 +46,8 @@ class EDFbrowse(QMainWindow):
 		self.remove = False
 		self.jump = False
 		self.viewbox_exist = False
+		self.ds = 3
 		self.initUI()
-
-		ranlist1 = []
-		for i in range(700):
-			ranlist1.append(0)
-		for i in range(20):
-			ranlist1.append(1)
-		random.shuffle(ranlist1)
-		self.detData = ranlist1
-
-		ranlist2 = []
-		for i in range(700):
-			ranlist2.append(0)
-		for i in range(20):
-			ranlist2.append(1)
-		random.shuffle(ranlist2)
-
-		self.predData = ranlist2
-
-		dp.makeDataList(self)
 		self.existfft=0
  	
 
@@ -120,10 +101,20 @@ class EDFbrowse(QMainWindow):
 
 
 	def initUI(self):
-		openAction = QAction('Open',self)
+		openAction = QAction('Open EDF',self)
 		openAction.setShortcut('Ctrl+O')
 		self.OpenFile = types.MethodType(Menuaction.OpenFile,self)
 		openAction.triggered.connect(self.OpenFile)
+
+		openDetAction = QAction('Open Detection',self)
+		openDetAction.setShortcut('Ctrl+D')
+		self.OpenDet = types.MethodType(Menuaction.OpenDet,self)
+		openDetAction.triggered.connect(self.OpenDet)
+
+		openPredAction = QAction('Open Prediction',self)
+		openPredAction.setShortcut('Ctrl+P')
+		self.OpenPred = types.MethodType(Menuaction.OpenPred,self)
+		openPredAction.triggered.connect(self.OpenPred)
 
 		STFTAction = QAction('Powerspectrum',self)
 		STFTAction.setShortcut('Alt+P')
@@ -136,6 +127,8 @@ class EDFbrowse(QMainWindow):
 		menubar.setNativeMenuBar(False)
 		fileMenu = menubar.addMenu('&File')
 		fileMenu.addAction(openAction)
+		fileMenu.addAction(openDetAction)
+		fileMenu.addAction(openPredAction)
 		fileMenu = menubar.addMenu('&Tools')
 		fileMenu.addAction(STFTAction)
 		#self.setWindowFlags(Qt.CustomizeWindowHint)

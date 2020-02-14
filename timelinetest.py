@@ -25,34 +25,33 @@ def dfname(parent):
 	dettext = pg.TextItem(text="Detection",color=(200,200,200))
 	predtext = pg.TextItem(text="Prediction",color=(200,200,200))
 	
-	detname = win.addPlot(1,1)
+	detname = addPlot(1,1)
 	detname.addItem(dettext)
-	predname = win.addPlot(2,1)
+	predname = addPlot(2,1)
 	predname.addItem(predtext)
 	"""
 def getPlaytimeChanged(self,playtime):
-	hour = playtime/60
-	self.parent.detviewbox.timeline.setPos(hour)
-	self.parent.predviewbox.timeline.setPos(hour)
+	hour = playtime / 3600
+	self.parent.DPFrame.detviewbox.timeline.setPos(hour)
+	self.parent.DPFrame.predviewbox.timeline.setPos(hour)
 	
 
 
 def detPredBar(parent):
+	parent.getPlaytimeChanged = partial(getPlaytimeChanged,parent)
+
 	#window
-	pg.setConfigOption('background','#303030')
-
+	#pg.setConfigOption('background','#303030')
 	parent.win = pg.GraphicsLayoutWidget(parent=parent)
-	parent.win.getPlaytimeChanged = partial(getPlaytimeChanged,parent.win)
-
-	parent.win.setGeometry(0,0,parent.geometry().width()+3,parent.geometry().height())
+	parent.win.setGeometry(0,0,parent.geometry().width()+2,parent.geometry().height())
 	
 	parent.lay = parent.win.addLayout(0,0)
 	parent.lay.setBorder()
-
+	
 
 	#DetectPlot
 	parent.det = parent.lay.addPlot(1,1)
-
+	
 	parent.det.showAxis('bottom',show=True)
 	parent.det.showAxis('left',show=False)
 
@@ -75,23 +74,23 @@ def detPredBar(parent):
 	parent.pred.plot(parent.parent.predx,parent.parent.predData,stepMode=True, fillLevel=0,
 					brush=(0,150,0,255),pen=pg.mkPen((0,150,0,255)))
 
-	timeline1 = pg.InfiniteLine(pen=pg.mkPen('y',width=2),
-							   hoverPen=pg.mkPen('y',width=2),
-							   movable=True)
-
-	timeline2 = pg.InfiniteLine(pen=pg.mkPen('y',width=2),
-							   hoverPen=pg.mkPen('y',width=2),
-							   movable=True)
-
-
 	#Get Viewbox
 	
-	parent.win.detviewbox = parent.det.getViewBox()
-	detviewbox = parent.win.detviewbox
-	detviewbox.parent = parent
-	parent.win.predviewbox = parent.pred.getViewBox()
-	predviewbox = parent.win.predviewbox
-	predviewbox.parent = parent
+	parent.detviewbox = parent.det.getViewBox()
+	parent.predviewbox = parent.pred.getViewBox()
+	parent.detviewbox.frame = parent
+	parent.predviewbox.frame = parent
+
+	#Timeline
+	dettimeline = pg.InfiniteLine(pen=pg.mkPen('y',width=2),
+							   hoverPen=pg.mkPen('y',width=2),
+							   movable=True)
+	parent.detviewbox.timeline = dettimeline
+
+	predtimeline = pg.InfiniteLine(pen=pg.mkPen('y',width=2),
+							   hoverPen=pg.mkPen('y',width=2),
+							   movable=True)
+	parent.predviewbox.timeline = predtimeline
 
 	
 	#Detectbar
@@ -100,8 +99,7 @@ def detPredBar(parent):
 	parent.dettime.setTickSpacing(major=1,minor=1)
 	parent.dettime.setGrid(255)
 	parent.dettime.setPen('#A0A0A0')
-	detviewbox.addItem(parent.dettime)
-	detviewbox.timeline = parent.dettime
+	parent.detviewbox.addItem(parent.dettime)
 
 	'''
 	parent.secdet = parent.lay.addViewBox(1,1)
@@ -120,8 +118,7 @@ def detPredBar(parent):
 	parent.predtime.setTickSpacing(major=1/6,minor=1/6)
 	parent.predtime.setGrid(255)
 	parent.predtime.setPen('#A0A0A0')
-	predviewbox.addItem(parent.predtime)
-	predviewbox.timeline = parent.predtime
+	parent.predviewbox.addItem(parent.predtime)
 
 	'''
 	parent.secpred = parent.lay.addViewBox(1,1)
@@ -135,10 +132,10 @@ def detPredBar(parent):
 	parent.secpred.addItem(parent.minorpredtime)	
 	'''
 	#InfLabel
-	pg.InfLineLabel(timeline1)
-	pg.InfLineLabel(timeline2)
-	parent.det.addItem(timeline1)
-	parent.pred.addItem(timeline2)
+	pg.InfLineLabel(dettimeline)
+	pg.InfLineLabel(predtimeline)
+	parent.det.addItem(dettimeline)
+	parent.pred.addItem(predtimeline)
 
 
 
@@ -149,5 +146,5 @@ def detPredBar(parent):
 		
 		self.parent.parent.playtime = clktime//(1/fre)*(1/fre)
 
-	detviewbox.mouseClickEvent = partial(mouseClickEvent,parent.win.detviewbox)	
-	predviewbox.mouseClickEvent = partial(mouseClickEvent,parent.win.predviewbox)
+	parent.detviewbox.mouseClickEvent = partial(mouseClickEvent,parent.detviewbox)	
+	parent.predviewbox.mouseClickEvent = partial(mouseClickEvent,parent.predviewbox)

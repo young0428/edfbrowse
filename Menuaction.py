@@ -7,7 +7,8 @@ import MakeWindow
 import time
 import show_fft_function as showfft
 import pandas as pd
-
+import numpy as np
+import timelinetest as dp
 
 start_xpx = 20
 start_ypx = 20
@@ -31,7 +32,23 @@ def OpenFile(self):
 	self.plots = [[None]*self.FullCh_num]*len(self.ck_load)
 	self.unit = 1/self.Frequency
 
+
+	self.detData = np.zeros(int(self.duration*edf.datarecords_in_file))
+	self.predData = np.zeros(int(self.duration*edf.datarecords_in_file))
+	dp.makeDataList(self)
+
+
+
 	MakeWindow.mkChannelSelect(self)
+def OpenDet(self):
+	fname = QFileDialog.getOpenFileName(self, 'Open file', './')
+	if fname[0] :
+		if not fname[0][len(fname[0])-4:] == '.csv':
+			sys.stderr.write("Failed to Open")
+
+def OpenPred(self):
+	pass
+
 	
 def STFT(self):
 	class selectedChanelWindow(QMainWindow):

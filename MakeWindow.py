@@ -123,7 +123,7 @@ def mkSignalWindow(self):
 	self.SignalPlot.showButtons()
 
 	#self.SignalPlot.setBackground('w')
-	self.ds = 3
+	
 	self.SignalPlot.setContentsMargins(0, 0, 0, 0)
 	
 	plotstyle = pg.mkPen(color='y',width=0.6)
@@ -133,7 +133,7 @@ def mkSignalWindow(self):
 	self.SignalPlot.setYRange(-100,(self.parent.Ch_num-1)*100+100,padding=0)
 	self.SignalPlot.enableAutoRange(axis='xy',enable=False)
 	self.SignalPlot.setMouseEnabled(x=True,y=True)
-	self.SignalPlot.setDownsampling(ds = self.ds,auto=False,mode='subsample')
+	self.SignalPlot.setDownsampling(ds = self.parent.ds,auto=False,mode='subsample')
 
 	self.SignalPlot.setClipToView(True)
 
@@ -399,7 +399,7 @@ def mkSignalWindow(self):
 			self.parent.LoadingPivot = self.parent.playtime
 		
 		#self.SignalPlot.setXRange(self.parent.playtime*self.parent.Frequency,(self.parent.playtime+self.parent.TimeScale)*self.parent.Frequency,padding=0)
-		self.parent.DPFrame.win.getPlaytimeChanged(self.parent.playtime)
+		self.parent.DPFrame.getPlaytimeChanged(self.parent.playtime)
 		self.textbox1.setText(str(self.parent.playtime))
 		self.textbox2.setText(str(self.parent.playtime+self.parent.TimeScale))
 
@@ -445,7 +445,8 @@ def mkSignalWindow(self):
 			self.frame.UpdatePlotting.StartUpdate(1)
 		else:
 			self.frame.parent.TimeScale = cur_TimeScale
-		self.frame.SignalPlot.setDownsampling(ds=3+self.frame.parent.TimeScale//30)
+		self.frame.parent.ds = 3+self.frame.parent.TimeScale//30
+		self.frame.SignalPlot.setDownsampling(ds=3+self.frame.parent.ds)
 		self.frame.parent.playtime = (self.viewRange()[0][0]/self.frame.parent.Frequency)//self.frame.parent.unit/self.frame.parent.Frequency
 
 		

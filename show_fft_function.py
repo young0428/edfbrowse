@@ -28,7 +28,6 @@ import numpy as np
 def getplaytimechanged(self):
 	data = make_data(self,self.EDF)
 	self.FFTFrame.plt1.clearPlots()
-	self.FFTFrame.maxpsd = max(data.psd)
 	self.FFTFrame.plt1.setYRange(0,self.FFTFrame.maxpsd)
 	self.FFTFrame.plt1.setLimits(minXRange=100,xMin=0,xMax=100,yMin=0,yMax=5+self.FFTFrame.maxpsd)
 	self.FFTFrame.plt1.plot(data.bins,data.psd,stepMode=True, fillLevel=0, brush=(0,0,0,150),pen=pg.mkPen('g'))
@@ -36,11 +35,9 @@ def getplaytimechanged(self):
 def gettimescalechanged(self):
 	data = make_data(self,self.EDF)
 	self.FFTFrame.plt1.clearPlots()
-	self.FFTFrame.maxpsd = max(data.psd)
 	self.FFTFrame.plt1.setYRange(0,self.FFTFrame.maxpsd)
 	self.FFTFrame.plt1.setLimits(minXRange=100,xMin=0,xMax=100,yMin=0,yMax=5+self.FFTFrame.maxpsd)
 	self.FFTFrame.plt1.plot(data.bins,data.psd,stepMode=True, fillLevel=0, brush=(0,0,0,150),pen=pg.mkPen('g'))
-
 
 
 class make_data:
@@ -80,6 +77,8 @@ def show_fft(parent,data):
 	parent.ffttime.setPen('#A0A0A0')
 
 	parent.plt1 = parent.win.addPlot(axisItems={'left':parent.ffttimeleft,'bottom':parent.ffttime})
+	parent.plt1.getViewBox().frame = parent
+	
 	parent.plt1.showGrid(x=True, y=True,alpha=1)
 	parent.plt1.setLabel('bottom', text='Frequency', units='Hz')
 	parent.plt1.setLabel('left', text='PSD', units='uV^2/Hz')
