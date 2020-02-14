@@ -19,10 +19,17 @@ def makeDataList(self):
 
 
 def dfname(parent):
-	parent.win = pg.GraphicsLayoutWidget(parent=parent)
-	parent.win.setGeometry(0,0,parent.geometry().width(),parent.geometry().height())
-
-
+	win = pg.GraphicsLayoutWidget(parent=parent)
+	win.setGeometry(0,0,parent.geometry().width(),parent.geometry().height())
+	"""
+	dettext = pg.TextItem(text="Detection",color=(200,200,200))
+	predtext = pg.TextItem(text="Prediction",color=(200,200,200))
+	
+	detname = win.addPlot(1,1)
+	detname.addItem(dettext)
+	predname = win.addPlot(2,1)
+	predname.addItem(predtext)
+	"""
 def getPlaytimeChanged(self,playtime):
 	hour = playtime/60
 	self.detviewbox.timeline.setPos(hour)
@@ -42,14 +49,9 @@ def detPredBar(parent):
 	parent.lay = parent.win.addLayout(0,0)
 	parent.lay.setBorder()
 
-	#DetPlot
-	parent.dettime = pg.AxisItem(orientation='bottom')
-	parent.dettime.setScale(1/60)
-	parent.dettime.setTickSpacing(major=1,minor=None)
-	parent.dettime.setGrid(255)
-	parent.dettime.setPen('#A0A0A0')
 
-	parent.det = parent.lay.addPlot(1,1,axisItems={'bottom':parent.dettime})
+	#DetectPlot
+	parent.det = parent.lay.addPlot(1,1)
 
 	parent.det.showAxis('bottom',show=True)
 	parent.det.showAxis('left',show=False)
@@ -60,15 +62,9 @@ def detPredBar(parent):
 	parent.det.plot(parent.parent.detx,parent.parent.detData,stepMode=True, fillLevel=0,
 					brush=(255,0,0,255),pen=pg.mkPen('r'))
 
-	#predictbar
-	parent.predtime = pg.AxisItem(orientation='bottom')
-	parent.predtime.setScale(1/60)
-	parent.predtime.setTickSpacing(major=1,minor=1/6)
-	parent.predtime.setGrid(255)
-	parent.predtime.setPen('#A0A0A0')
 
-	#predPlot
-	parent.pred = parent.lay.addPlot(2,1,axisItems={'bottom':parent.predtime})
+	#predictPlot
+	parent.pred = parent.lay.addPlot(2,1)
 
 	parent.pred.showAxis('bottom',show=True)
 	parent.pred.showAxis('left',show=False)
@@ -87,19 +83,62 @@ def detPredBar(parent):
 							   hoverPen=pg.mkPen('y',width=2),
 							   movable=True)
 
+
+	#Get Viewbox
+	
+	parent.win.detviewbox = parent.det.getViewBox()
+	detviewbox = parent.win.detviewbox
+	detviewbox.parent = parent
+	parent.win.predviewbox = parent.pred.getViewBox()
+	predviewbox = parent.win.predviewbox
+	predviewbox.parent = parent
+
+	
+	#Detectbar
+	parent.dettime = pg.AxisItem(orientation='bottom')
+	parent.dettime.setScale(1/3600)
+	parent.dettime.setTickSpacing(major=1,minor=1)
+	parent.dettime.setGrid(255)
+	parent.dettime.setPen('#A0A0A0')
+	detviewbox.addItem(parent.dettime)
+	detviewbox.timeline = parent.dettime
+
+	'''
+	parent.secdet = parent.lay.addViewBox(1,1)
+	parent.secdet.showAxis('bottom',show=True)
+	parent.secdet.showAxis('left',show=False)
+	parent.minordettime = pg.AxisItem(orientation='bottom')
+	parent.minordettime.setScale(1%60)
+	parent.minordettime.setTickSpacing(major=None,minor=1)
+	parent.minordettime.setGrid(255)
+	parent.minordettime.setPen('#A0A0A0')
+	parent.secdet.addItem(parent.minordettime)
+	'''
+	#Predictbar
+	parent.predtime = pg.AxisItem(orientation='bottom')
+	parent.predtime.setScale(1/60)
+	parent.predtime.setTickSpacing(major=1/6,minor=1/6)
+	parent.predtime.setGrid(255)
+	parent.predtime.setPen('#A0A0A0')
+	predviewbox.addItem(parent.predtime)
+	predviewbox.timeline = parent.predtime
+
+	'''
+	parent.secpred = parent.lay.addViewBox(1,1)
+	parent.secpred.showAxis('bottom',show=True)
+	parent.secpred.showAxis('left',show=False)
+	parent.minorpredtime = pg.AxisItem(orientation='bottom')
+	parent.minorpredtime.setScale(1%60)
+	parent.minorpredtime.setTickSpacing(major=None,minor=1)
+	parent.minorpredtime.setGrid(255)
+	parent.minorpredtime.setPen('#A0A0A0')
+	parent.secpred.addItem(parent.minorpredtime)	
+	'''
+	#InfLabel
 	pg.InfLineLabel(timeline1)
 	pg.InfLineLabel(timeline2)
 	parent.det.addItem(timeline1)
 	parent.pred.addItem(timeline2)
-
-	detviewbox = parent.det.getViewBox()
-	parent.win.detviewbox = detviewbox
-	parent.win.detviewbox.parent = parent
-	detviewbox.timeline = timeline1
-	predviewbox = parent.pred.getViewBox()
-	parent.win.predviewbox = predviewbox
-	parent.win.predviewbox.parent = parent
-	predviewbox.timeline = timeline2
 
 
 
@@ -108,65 +147,7 @@ def detPredBar(parent):
 		clktime = self.mapSceneToView(e.scenePos()).x()
 		self.timeline.setPos(clktime)
 		
-		self.parent.parent.playtime = clktime*60//(1/fre)*(1/fre)
+		self.parent.parent.playtime = clktime//(1/fre)*(1/fre)
 
 	detviewbox.mouseClickEvent = partial(mouseClickEvent,parent.win.detviewbox)	
 	predviewbox.mouseClickEvent = partial(mouseClickEvent,parent.win.predviewbox)
-
-class MyApp(QWidget):
-
-	def __init__(self):
-		super().__init__()
-		self.MainSize_x = xpx
-		self.MainSize_y = ypx
-		self.WindowChildren = []
-		self.initUI()
-
-	def initUI(self):
-		detPredBar(self)
-		self.win.show()
-		self.show()
-	"""
-	def nativeEvent(self,eventType,message):
-			msg = ctypes.wintypes.MSG.from_address(message.__int__())
-			if eventType == "windows_generic_MSG":
-				if msg.message == win32con.WM_NCLBUTTONDOWN:
-					nHittest = int(msg.wParam)
-					if nHittest in [win32con.HTCAPTION,win32con.HTBOTTOM,win32con.HTBOTTOMLEFT,win32con.HTBOTTOMRIGHT,win32con.HTLEFT,win32con.HTRIGHT,win32con.HTTOP,win32con.HTTOPLEFT,win32con.HTTOPRIGHT]:
-						self.WindowChildren = []
-
-
-						print(self.findChildren(QWidget))
-						for child in self.findChildren(QWidget):
-							if 'graphics' in str(child).lower():
-								print(child)
-								self.WindowChildren.append(child)
-						
-						if not nHittest == win32con.HTCAPTION:
-							
-							self.MainSize_x = self.size().width()
-							self.MainSize_y = self.size().height()
-							
-
-						self.WindowChildren_baseSize = []
-						for WindowChild in self.WindowChildren:
-							self.WindowChildren_baseSize.append([WindowChild.size().width(),WindowChild.size().height()])
-						
-
-			return False, 0
-	
-	def resizeEvent(self,e):
-		xSizeChangeRatio = (1+(e.size().width() - self.MainSize_x ) / self.MainSize_x)
-		ySizeChangeRatio = (1+(e.size().height() - self.MainSize_y )/ self.MainSize_y)
-		i=0
-		for WindowChild in self.WindowChildren:
-			WindowChild.resize(self.WindowChildren_baseSize[i][0]*xSizeChangeRatio, self.WindowChildren_baseSize[i][1]*ySizeChangeRatio)
-			i=i+1
-	"""
-
-
-
-if __name__ == '__main__':
-	app = QApplication(sys.argv)
-	ex = MyApp()
-	sys.exit(app.exec_())
