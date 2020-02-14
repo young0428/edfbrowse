@@ -410,10 +410,10 @@ def mkSignalWindow(self):
 			self.parent.LoadingPivot = self.parent.playtime
 		
 		#self.SignalPlot.setXRange(self.parent.playtime*self.parent.Frequency,(self.parent.playtime+self.parent.TimeScale)*self.parent.Frequency,padding=0)
-		self.parent.DPFrame.win.getPlaytimeChanged(self.parent.playtime)
+		self.parent.DPFrame.getPlaytimeChanged(self.parent.playtime)
 		self.textbox1.setText("%d:%d:%.2f"%(self.parent.playtime//3600,(self.parent.playtime%3600)//60,((self.parent.playtime)%3600)%60))
-		self.textbox1.setText("%d:%d:%.2f"%((self.parent.playtime+self.parent.TimeScale)//3600,(self.parent.playtime+self.parent.TimeScale)%3600)//60,
-						((self.parent.playtime+self.parent.TimeScale)%3600)%60)
+		self.textbox2.setText("%d:%d:%.2f"%((self.parent.playtime+self.parent.TimeScale)//3600,((self.parent.playtime+self.parent.TimeScale)%3600)//60,
+			((self.parent.playtime+self.parent.TimeScale)%3600)%60))
 
 	# self = button 클래스임
 	def viewrange_changed(self):
