@@ -214,6 +214,7 @@ def mkSignalWindow(self):
 	proxy4.setWidget(button_right_u)
 	textproxy.setWidget(self.textbox1)
 	textproxy2.setWidget(self.textbox2)
+	textproxy.resize(100,50)
 
 	self.TestButton = self.SignalWindow.addLayout(row=2,col=0,colspan=1)
 	self.TestButton.setMaximumWidth(120)
@@ -392,6 +393,8 @@ def mkSignalWindow(self):
 		
 		#self.SignalPlot.setXRange(self.parent.playtime*self.parent.Frequency,(self.parent.playtime+self.parent.TimeScale)*self.parent.Frequency,padding=0)
 		self.parent.DPFrame.win.getPlaytimeChanged(self.parent.playtime)
+		self.textbox1.setText(str(self.parent.playtime))
+		self.textbox2.setText(str(self.parent.playtime+self.parent.TimeScale))
 
 	# self = button 클래스임
 	def viewrange_changed(self):
