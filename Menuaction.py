@@ -18,28 +18,29 @@ ypx = 250
 def OpenFile(self):
 	fname = QFileDialog.getOpenFileName(self, 'Open file', './')
 	if fname[0] :
-		if not fname[0][len(fname[0])-4:] == '.edf':
-			sys.stderr.write("Failed to Open")
-			sys.exit(1)
+		if fname[0][len(fname[0])-4:] == '.edf':
+			
 
-	edf = pyedflib.EdfReader(fname[0])
+			edf = pyedflib.EdfReader(fname[0])
 
-	self.FullCh_num = edf.signals_in_file
-	self.Frequency = edf.getSampleFrequency(0)
-	self.EDF = edf
-	self.duration = edf.datarecord_duration
-	self.ck_load = [0]*int(edf.datarecords_in_file)
-	self.plots = [[None]*self.FullCh_num]*len(self.ck_load)
-	self.unit = 1/self.Frequency
-
-
-	self.detData = np.zeros(int(self.duration*edf.datarecords_in_file))
-	self.predData = np.zeros(int(self.duration*edf.datarecords_in_file))
-	dp.makeDataList(self)
+			self.FullCh_num = edf.signals_in_file
+			self.Frequency = edf.getSampleFrequency(0)
+			self.EDF = edf
+			self.duration = edf.datarecord_duration
+			self.ck_load = [0]*int(edf.datarecords_in_file)
+			self.plots = [[None]*self.FullCh_num]*len(self.ck_load)
+			self.unit = 1/self.Frequency
 
 
+			self.detData = np.zeros(int(self.duration*edf.datarecords_in_file))
+			self.predData = np.zeros(int(self.duration*edf.datarecords_in_file))
+			dp.makeDataList(self)
+			MakeWindow.mkChannelSelect(self)
+		else:
+			emsg = QMessageBox().critical(self,'File Open Error','Please open .edf file')
+			#emsg.setWindowTitle("File Open Error")
+			#emsg.setDetailedText("Please open .edf file");
 
-	MakeWindow.mkChannelSelect(self)
 def OpenDet(self):
 	fname = QFileDialog.getOpenFileName(self, 'Open file', './')
 	if fname[0] :
@@ -48,6 +49,13 @@ def OpenDet(self):
 
 def OpenPred(self):
 	pass
+
+def CloseFile(self):
+	for child in self.findChildren(QWidget):
+		if 'frame' in str(child).lower():
+			child.close()
+	if not self.EDF == None:
+		self.EDF._close()
 
 	
 def STFT(self):

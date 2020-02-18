@@ -19,14 +19,27 @@ def makeDataList(self):
 
 
 def dfname(parent):
+	container = QWidget(parent)
+	container.setStyleSheet('background:#333333;')
+	container.setGeometry(0,0,parent.geometry().width(),parent.geometry().height())
+
 	VLayout = QVBoxLayout()
+	VLayout.setContentsMargins(parent.geometry().width()*0.3,0,0,0)
+	container.setLayout(VLayout)
+	
+	#VLayout.setContentsMargins(0,0,0,0)
+	
 	a = QLabel("Detection")
-	a.setStyleSheet('color:white ; background:#333333;')
+	a.setStyleSheet('color:white; background:#333333;')
+	a.setAlignment(Qt.AlignCenter)
 	b = QLabel("Prediction")
 	b.setStyleSheet('color:white ; background:#333333;')
+	b.setAlignment(Qt.AlignCenter)
 	VLayout.addWidget(a)
 	VLayout.addWidget(b)
-	parent.setLayout(VLayout)
+	
+	
+
 	
 
 
@@ -112,12 +125,14 @@ def detPredBar(parent):
 	dettimeline = pg.InfiniteLine(pen=pg.mkPen('y',width=2),
 							   hoverPen=pg.mkPen('y',width=2),
 							   movable=True)
+	
 	parent.detviewbox.timeline = dettimeline
 	parent.detviewbox.addItem(dettimeline)
 
 	predtimeline = pg.InfiniteLine(pen=pg.mkPen('y',width=2),
 							   hoverPen=pg.mkPen('y',width=2),
 							   movable=True)
+	
 	parent.predviewbox.timeline = predtimeline
 	parent.detviewbox.addItem(predtimeline)
 	
@@ -136,6 +151,13 @@ def detPredBar(parent):
 		self.timeline.setPos(clktime)
 		
 		self.frame.parent.playtime = clktime//(1/fre)*(1/fre)
+	def MoveFinished(self,obj):
+		self.frame.parent.playtime = (obj.getXPos()//self.frame.parent.unit)/self.frame.parent.Frequency
 
 	parent.detviewbox.mouseClickEvent = partial(mouseClickEvent,parent.detviewbox)	
 	parent.predviewbox.mouseClickEvent = partial(mouseClickEvent,parent.predviewbox)
+	parent.detviewbox.MoveFinished = partial(MoveFinished,parent.detviewbox)
+	parent.predviewbox.MoveFinished = partial(MoveFinished,parent.predviewbox)
+
+	predtimeline.sigPositionChangeFinished.connect(parent.predviewbox.MoveFinished)
+	dettimeline.sigPositionChangeFinished.connect(parent.detviewbox.MoveFinished)

@@ -78,6 +78,6 @@ def show_fft(parent,data):
 	parent.plt1.setLabel('left', text='PSD', units='uV^2/Hz')
 	parent.plt1.enableAutoRange(axis='xy', enable=False)
 	parent.plt1.setYRange(0,parent.maxpsd)
-	parent.plt1.setLimits(minXRange=100,xMin=0,xMax=100,yMin=0,yMax=5+parent.maxpsd)
+	parent.plt1.setLimits(minXRange=50,maxXRange=50,xMin=0,xMax=100,yMin=0,yMax=5+parent.maxpsd)
 	parent.plt1.setMouseEnabled(x=False,y=False)
 	parent.plt1.p = parent.plt1.plot(data.bins,data.psd,stepMode=True, fillLevel=0, brush=(0,0,0,150),pen=pg.mkPen(color='g',width=0.6))

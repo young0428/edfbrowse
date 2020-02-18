@@ -27,7 +27,6 @@ class childframe(QWidget):
 		self.parent = parent
 		self.setWindowFlags(Qt.WindowStaysOnTopHint)
 		self.initResized = False
-
 	def setChildWidgetInfo(self):
 		self.ChildrenWidget = []
 
@@ -111,7 +110,7 @@ def mkSignalWindow(self):
 	pg.setConfigOption('background', '#333333')
 	pg.setConfigOption('foreground', 'y')
 	self.SignalWindow = pg.GraphicsLayoutWidget(parent=self)
-	#
+	self.dragging = False
 	
 	self.SignalWindow.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
 	self.SignalWindow.setGeometry(0,0,self.parent.signal_frame_width,self.parent.signal_frame_height)
@@ -127,7 +126,7 @@ def mkSignalWindow(self):
 
 	self.axisitem = TimeAxisItem(self,orientation='bottom')
 
-	self.SignalPlot = self.SignalWindow.addPlot(enableMouse=False,row=0,col=0,colspan=9,axisItems={'bottom':self.axisitem},
+	self.SignalPlot = self.SignalWindow.addPlot(enableMenu = False,enableMouse=False,row=0,col=0,colspan=9,axisItems={'bottom':self.axisitem},
 												border=pg.mkPen(color=(255,255,0,255),width=4))
 
 
@@ -177,13 +176,14 @@ def mkSignalWindow(self):
 		
 
 	self.PlotViewBox = self.SignalPlot.getViewBox()
+	self.PlotViewBox.enableMenu = False
 	self.parent.viewbox_exist = True
 	self.PlotViewBox.border = pg.mkPen(color=(255,255,255,150),width=0.8)
 	self.PlotViewBox.frame = self
 	
 	self.PlotViewBox.setLimits(xMin=0,yMin=-100,yMax=(self.parent.Ch_num-1)*100+100,
 								minYRange = (self.parent.Ch_num-1)*100+200,maxYRange=(self.parent.Ch_num-1)*100+200
-								,minXRange=self.parent.Frequency*0.1,maxXRange=self.parent.Frequency*600)
+								,minXRange=self.parent.Frequency*0.1,maxXRange=self.parent.Frequency*602)
 	self.parent.Resized = False
 
 
@@ -322,10 +322,6 @@ def mkSignalWindow(self):
 					line_pos = line_pos + self.frame.parent.line_per_time
 
 
-
-
-	
-						
 			
 				for i in range(start_duration_index,end_duration_index+1):
 					self.frame.parent.ck_load[i] = 1
@@ -341,6 +337,7 @@ def mkSignalWindow(self):
 						self.frame.SignalPlot.removeItem(itemlist[i])
 						for j in range(s,e):
 							self.frame.parent.ck_load[j] = 0
+						
 				if hasattr(itemlist[i],'time'):
 					if (self.frame.parent.playtime - self.frame.parent.TimeScale*2) > itemlist[i].time or (self.frame.parent.playtime + self.frame.parent.TimeScale*3) < itemlist[i].time:
 						self.frame.SignalPlot.removeItem(itemlist[i])
@@ -371,14 +368,6 @@ def mkSignalWindow(self):
 				start = start + self.frame.parent.line_per_time
 		
 
-
-
-
-
-
-
-
-
 	self.UpdatePlotting = Update(self)
 	self.LineUpdatting = LineUpdate(self)
 	self.UpdateThread = QThread()
@@ -388,14 +377,10 @@ def mkSignalWindow(self):
 	self.UpdateThread.start()
 	self.LineThread.start()
 
-	
-
-
 
 	def PlayTimeUpdated(self):
-
 		if self.parent.btn_click or abs(self.parent.LoadingPivot-self.parent.playtime) >= self.parent.TimeScale or (not self.PlotViewBox.CtrlPress):
-			self.SignalPlot.setXRange(self.parent.playtime*self.parent.Frequency,(self.parent.playtime + self.parent.TimeScale)*self.parent.Frequency,padding=0,update=True)
+			self.SignalPlot.setXRange(self.parent.playtime*self.parent.Frequency,(self.parent.playtime + self.parent.TimeScale)*self.parent.Frequency,padding=0,update=True)				
 		if abs(self.parent.LoadingPivot-self.parent.playtime) >= self.parent.TimeScale:
 			#0 == 진행방향 뒤로 , 1== 진행방향 앞으로
 			if self.parent.jump:
@@ -422,15 +407,12 @@ def mkSignalWindow(self):
 		if abs(cur_TimeScale - self.frame.parent.TimeScale) > 1/self.frame.parent.Frequency*4:
 			if self.frame.parent.TimeScale >= 300 and not self.frame.parent.line_per_time == 120:
 				self.frame.parent.line_per_time = 120
-
 				self.frame.LineUpdatting.lineupdate()
 			elif self.frame.parent.TimeScale >= 90 and not self.frame.parent.line_per_time == 60:
 				self.frame.parent.line_per_time = 60
-				
 				self.frame.LineUpdatting.lineupdate()
 			elif self.frame.parent.TimeScale >= 30 and not self.frame.parent.line_per_time == 20:
 				self.frame.parent.line_per_time = 20
-
 				self.frame.LineUpdatting.lineupdate()
 			elif self.frame.parent.TimeScale >= 10 and not self.frame.parent.line_per_time == 5:
 				self.frame.parent.line_per_time = 5
@@ -446,21 +428,18 @@ def mkSignalWindow(self):
 				self.frame.LineUpdatting.lineupdate()
 			elif self.frame.parent.TimeScale >= 0.1 and not self.frame.parent.line_per_time == 0.05:
 				self.frame.parent.line_per_time = 0.05
-
 				self.frame.LineUpdatting.lineupdate()
-		if cur_TimeScale > self.frame.parent.TimeScale + 1/self.frame.parent.Frequency*4:
+			self.frame.dragging = True
 			self.frame.parent.TimeScale = cur_TimeScale
-			self.frame.UpdatePlotting.StartUpdate(0)
-			self.frame.UpdatePlotting.StartUpdate(1)
 		else:
-			self.frame.parent.TimeScale = cur_TimeScale
-		self.frame.parent.ds = 4+self.frame.parent.TimeScale//50
-		self.frame.SignalPlot.setDownsampling(ds=self.frame.parent.ds)
-		self.frame.parent.playtime = (self.viewRange()[0][0]/self.frame.parent.Frequency)//self.frame.parent.unit/self.frame.parent.Frequency
-
+			self.frame.SignalPlot.setXRange(self.frame.parent.playtime*self.frame.parent.Frequency,(self.frame.parent.playtime + self.frame.parent.TimeScale)*self.frame.parent.Frequency,padding=0,update=True)
+		
 		
 
-
+		if not self.frame.parent.ds == 4+self.frame.parent.TimeScale//50:
+			self.frame.parent.ds = 4+self.frame.parent.TimeScale//50
+			self.frame.SignalPlot.setDownsampling(ds=self.frame.parent.ds)
+		self.frame.parent.playtime = (self.viewRange()[0][0]/self.frame.parent.Frequency)//self.frame.parent.unit/self.frame.parent.Frequency
 
 
 
@@ -485,15 +464,6 @@ def mkSignalWindow(self):
 		self.parent.playtime += self.parent.TimeScale
 		self.parent.btn_click = False
 
-
-		
-
-	
-	
-	#self.update.start()
-	
-	
-
 	self.PlayTimeUpdated = partial(PlayTimeUpdated,self)
 	self.move_left = partial(move_left,self)
 	self.move_right = partial(move_right,self)
@@ -508,17 +478,16 @@ def mkSignalWindow(self):
 	button_right_u.clicked.connect(self.move_right_u)
 
 
-
-
-
-
 def mkChannelSelect(self):
-	
 	class ChannelWindow(QMainWindow):
 		def __init__(self,parent=None):
 			super(ChannelWindow,self).__init__(parent)
 			self.Main = parent
 			self.initUI()
+		def closeEvent(self,ev):
+			self.deleteLater()
+			if not self.Main.ChannelOpen:
+				self.Main.EDF._close()
 
 
 		def setChannel(self):
@@ -551,18 +520,24 @@ def mkChannelSelect(self):
 			mkSignalWindow(self.Main.SignalFrame)
 			timelinetest.detPredBar(self.Main.DPFrame)
 			timelinetest.dfname(self.Main.DPNameFrame)
+	
 			self.Main.SignalFrame.show()
 			self.Main.DPFrame.show()
 			self.Main.DPNameFrame.show()
+		
+			
 			self.close()
 			
 
 
 		def Cancel(self):
-			self.Main.ChannelOpen = False
+			
 			self.close()
+
+
 			
 		def initUI(self):
+			self.Main.ChannelOpen = False
 			widget = QWidget()
 			vbox = QVBoxLayout()
 			hbox = QHBoxLayout()
