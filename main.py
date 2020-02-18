@@ -1,6 +1,7 @@
 import sys
 import types
 import ctypes
+import math
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
@@ -104,6 +105,8 @@ class EDFbrowse(QMainWindow):
 
 
 	def initUI(self):
+
+		#self.setStyleSheet('background:#333333;')
 		openAction = QAction('Open EDF',self)
 		openAction.setShortcut('Ctrl+O')
 		self.OpenFile = types.MethodType(Menuaction.OpenFile,self)
@@ -158,9 +161,8 @@ class EDFbrowse(QMainWindow):
 		if eventType == "windows_generic_MSG":
 			if msg.message == win32con.WM_NCLBUTTONDOWN:
 				nHittest = int(msg.wParam)
-				if nHittest in [win32con.HTCAPTION,win32con.HTBOTTOM,win32con.HTBOTTOMLEFT,win32con.HTBOTTOMRIGHT,win32con.HTLEFT,win32con.HTRIGHT,win32con.HTTOP,win32con.HTTOPLEFT,win32con.HTTOPRIGHT]:
+				if nHittest in [win32con.HTMAXBUTTON,win32con.HTMINBUTTON,win32con.HTCAPTION,win32con.HTBOTTOM,win32con.HTBOTTOMLEFT,win32con.HTBOTTOMRIGHT,win32con.HTLEFT,win32con.HTRIGHT,win32con.HTTOP,win32con.HTTOPLEFT,win32con.HTTOPRIGHT]:
 					self.WindowChildren = []
-
 
 
 					for child in self.findChildren(QWidget):
@@ -174,10 +176,13 @@ class EDFbrowse(QMainWindow):
 						self.MainSize_y = self.size().height()
 						for childframe in self.WindowChildren:
 							childframe.setChildWidgetInfo()
+						print(self.MainSize_x)
+						print(self.MainSize_y)
 
 					self.WindowChildren_baseSize = []
 					for WindowChild in self.WindowChildren:
 						self.WindowChildren_baseSize.append([WindowChild.size().width(),WindowChild.size().height(),WindowChild.geometry().x(),WindowChild.geometry().y()])
+					print('bb')
 			if msg.message == win32con.WM_KEYDOWN:
 				nHittest = int(msg.wParam)
 				if self.viewbox_exist:
@@ -234,10 +239,10 @@ class EDFbrowse(QMainWindow):
 		ySizeChangeRatio = (1+(e.size().height() - self.MainSize_y )/ self.MainSize_y)
 		i=0
 		for WindowChild in self.WindowChildren:
-			WindowChild.setGeometry(int(self.WindowChildren_baseSize[i][2]*xSizeChangeRatio),
-									int(self.WindowChildren_baseSize[i][3]*ySizeChangeRatio),
-									self.WindowChildren_baseSize[i][0]*xSizeChangeRatio,
-									self.WindowChildren_baseSize[i][1]*ySizeChangeRatio)
+			WindowChild.setGeometry((self.WindowChildren_baseSize[i][2]*xSizeChangeRatio),
+									(self.WindowChildren_baseSize[i][3]*ySizeChangeRatio),
+									math.ceil(self.WindowChildren_baseSize[i][0]*xSizeChangeRatio),
+									math.ceil(self.WindowChildren_baseSize[i][1]*ySizeChangeRatio))
 			i=i+1
 
 	

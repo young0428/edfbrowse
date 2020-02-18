@@ -24,7 +24,7 @@ def dfname(parent):
 	container.setGeometry(0,0,parent.geometry().width(),parent.geometry().height())
 
 	VLayout = QVBoxLayout()
-	VLayout.setContentsMargins(parent.geometry().width()*0.3,0,0,0)
+	VLayout.setContentsMargins(parent.geometry().width()*0.1,0,0,0)
 	container.setLayout(VLayout)
 	
 	#VLayout.setContentsMargins(0,0,0,0)
