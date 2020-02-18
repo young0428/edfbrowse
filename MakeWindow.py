@@ -370,15 +370,6 @@ def mkSignalWindow(self):
 				self.frame.SignalPlot.addItem(line)
 				start = start + self.frame.parent.line_per_time
 		
-
-
-
-
-
-
-
-
-
 	self.UpdatePlotting = Update(self)
 	self.LineUpdatting = LineUpdate(self)
 	self.UpdateThread = QThread()
@@ -389,9 +380,6 @@ def mkSignalWindow(self):
 	self.LineThread.start()
 
 	
-
-
-
 	def PlayTimeUpdated(self):
 
 		if self.parent.btn_click or abs(self.parent.LoadingPivot-self.parent.playtime) >= self.parent.TimeScale or (not self.PlotViewBox.CtrlPress):

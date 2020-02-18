@@ -22,6 +22,7 @@ def dfname(parent):
 	VLayout = QVBoxLayout()
 	a = QLabel("Detection")
 	a.setStyleSheet('color:white ; background:#333333;')
+	a.setGeometry(0,0,parent.geometry().width(),parent.geometry().height()/2)
 	b = QLabel("Prediction")
 	b.setStyleSheet('color:white ; background:#333333;')
 	VLayout.addWidget(a)
