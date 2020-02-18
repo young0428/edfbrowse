@@ -17,8 +17,7 @@ from functools import partial
 import Menuaction
 import MakeWindow
 import show_fft_function as showfft
-
-
+import timelinetest as dp
 
 class EDFbrowse(QMainWindow):
 
@@ -40,15 +39,17 @@ class EDFbrowse(QMainWindow):
 		self._playtime = 0
 		self._TimeScale = 10
 		self._LoadingPivot = 0
+		self.line_per_time = 1
 		self.btn_click = False
 		self.update = False
 		self.preload = False
 		self.remove = False
 		self.jump = False
+		self.viewbox_exist = False
+		self.ds = 4
 		self.initUI()
-
-
 		self.existfft=0
+		self.EDF = None
  	
 
 	@property
@@ -80,7 +81,7 @@ class EDFbrowse(QMainWindow):
 		if value < 0 :
 			self._playtime = 0
 		else:
-			if abs(value - self._playtime) > self._TimeScale:
+			if abs(value - self._playtime) > self._TimeScale*2:
 				self.jump = True
 			self._playtime = value
 			self.playtimeChanged.emit()
@@ -96,14 +97,31 @@ class EDFbrowse(QMainWindow):
 		self._LoadingPivot = value
 
 
+
+
 	
 
 
+
 	def initUI(self):
-		openAction = QAction('Open',self)
+		openAction = QAction('Open EDF',self)
 		openAction.setShortcut('Ctrl+O')
 		self.OpenFile = types.MethodType(Menuaction.OpenFile,self)
 		openAction.triggered.connect(self.OpenFile)
+
+		closeAction = QAction('Close EDF',self)
+		self.CloseFile = types.MethodType(Menuaction.CloseFile,self)
+		closeAction.triggered.connect(self.CloseFile)
+
+		openDetAction = QAction('Open Detection',self)
+		openDetAction.setShortcut('Ctrl+D')
+		self.OpenDet = types.MethodType(Menuaction.OpenDet,self)
+		openDetAction.triggered.connect(self.OpenDet)
+
+		openPredAction = QAction('Open Prediction',self)
+		openPredAction.setShortcut('Ctrl+P')
+		self.OpenPred = types.MethodType(Menuaction.OpenPred,self)
+		openPredAction.triggered.connect(self.OpenPred)
 
 		STFTAction = QAction('Powerspectrum',self)
 		STFTAction.setShortcut('Alt+P')
@@ -116,6 +134,9 @@ class EDFbrowse(QMainWindow):
 		menubar.setNativeMenuBar(False)
 		fileMenu = menubar.addMenu('&File')
 		fileMenu.addAction(openAction)
+		fileMenu.addAction(closeAction)
+		fileMenu.addAction(openDetAction)
+		fileMenu.addAction(openPredAction)
 		fileMenu = menubar.addMenu('&Tools')
 		fileMenu.addAction(STFTAction)
 		#self.setWindowFlags(Qt.CustomizeWindowHint)
@@ -128,6 +149,7 @@ class EDFbrowse(QMainWindow):
 		
 		self.resize(self.screen.width(),self.screen.height())
 		self.showMaximized()
+
 				
 		#self.SignalWindow.setWindowFlags(Qt.FramelessWindowHint)
 
@@ -156,6 +178,40 @@ class EDFbrowse(QMainWindow):
 					self.WindowChildren_baseSize = []
 					for WindowChild in self.WindowChildren:
 						self.WindowChildren_baseSize.append([WindowChild.size().width(),WindowChild.size().height(),WindowChild.geometry().x(),WindowChild.geometry().y()])
+			if msg.message == win32con.WM_KEYDOWN:
+				nHittest = int(msg.wParam)
+				if self.viewbox_exist:
+					if nHittest == win32con.VK_CONTROL:
+						self.SignalFrame.PlotViewBox.CtrlPress = True
+					if nHittest == win32con.VK_RIGHT:
+						if self.SignalFrame.PlotViewBox.CtrlPress:
+							self.btn_click = True
+							self.playtime += self.TimeScale
+							self.btn_click = False
+						else:
+							self.btn_click = True
+							self.playtime += 1
+							self.btn_click = False
+					if nHittest == win32con.VK_LEFT:
+						if self.SignalFrame.PlotViewBox.CtrlPress:
+							self.btn_click = True
+							self.playtime -= self.TimeScale
+							self.btn_click = False
+						else:
+							self.btn_click = True
+							self.playtime -= 1
+							self.btn_click = False
+
+			if msg.message == win32con.WM_KEYUP:
+				nHittest = int(msg.wParam)
+				if self.viewbox_exist:
+					if nHittest == win32con.VK_CONTROL:
+						self.SignalFrame.PlotViewBox.CtrlPress = False
+						if self.SignalFrame.dragging:
+							self.SignalFrame.UpdatePlotting.StartUpdate(0)
+							self.SignalFrame.UpdatePlotting.StartUpdate(1)
+							self.SignalFrame.dragging = False
+					
 					
 
 		return False, 0
@@ -197,6 +253,13 @@ class EDFbrowse(QMainWindow):
 		if self.existfft == 1:
 			showfft.gettimescalechanged(self)
 
+	def closeEvent(self,e):
+		for child in self.findChildren(QWidget):
+			if 'frame' in str(child).lower():
+				child.close()
+		if not self.EDF == None:
+			self.EDF._close()
+		
 
 if __name__ == '__main__':
    app = QApplication(sys.argv)

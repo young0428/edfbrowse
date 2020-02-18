@@ -6,32 +6,57 @@ import pyedflib
 import MakeWindow
 import time
 import show_fft_function as showfft
+import pandas as pd
+import numpy as np
+import timelinetest as dp
 
-start_xpx = 0
-start_ypx = 0
+start_xpx = 20
+start_ypx = 50
 xpx = 1600
 ypx = 250
-in_xpx = xpx - 2*start_xpx
-in_ypx = ypx - 2*start_ypx
 
 def OpenFile(self):
 	fname = QFileDialog.getOpenFileName(self, 'Open file', './')
 	if fname[0] :
-		if not fname[0][len(fname[0])-4:] == '.edf':
+		if fname[0][len(fname[0])-4:] == '.edf':
+			
+
+			edf = pyedflib.EdfReader(fname[0])
+
+			self.FullCh_num = edf.signals_in_file
+			self.Frequency = edf.getSampleFrequency(0)
+			self.EDF = edf
+			self.duration = edf.datarecord_duration
+			self.ck_load = [0]*int(edf.datarecords_in_file)
+			self.plots = [[None]*self.FullCh_num]*len(self.ck_load)
+			self.unit = 1/self.Frequency
+
+
+			self.detData = np.zeros(int(self.duration*edf.datarecords_in_file))
+			self.predData = np.zeros(int(self.duration*edf.datarecords_in_file))
+			dp.makeDataList(self)
+			MakeWindow.mkChannelSelect(self)
+		else:
+			emsg = QMessageBox().critical(self,'File Open Error','Please open .edf file')
+			#emsg.setWindowTitle("File Open Error")
+			#emsg.setDetailedText("Please open .edf file");
+
+def OpenDet(self):
+	fname = QFileDialog.getOpenFileName(self, 'Open file', './')
+	if fname[0] :
+		if not fname[0][len(fname[0])-4:] == '.csv':
 			sys.stderr.write("Failed to Open")
-			sys.exit(1)
 
-	edf = pyedflib.EdfReader(fname[0])
+def OpenPred(self):
+	pass
 
-	self.FullCh_num = edf.signals_in_file
-	self.Frequency = edf.getSampleFrequency(0)
-	self.EDF = edf
-	self.duration = edf.datarecord_duration
-	self.ck_load = [0]*int(edf.datarecords_in_file)
-	self.plots = [[None]*self.FullCh_num]*len(self.ck_load)
-	self.unit = 1/self.Frequency
+def CloseFile(self):
+	for child in self.findChildren(QWidget):
+		if 'frame' in str(child).lower():
+			child.close()
+	if not self.EDF == None:
+		self.EDF._close()
 
-	MakeWindow.mkChannelSelect(self)
 	
 def STFT(self):
 	class selectedChanelWindow(QMainWindow):
@@ -45,10 +70,12 @@ def STFT(self):
 			self.Main.existfft = 1
 			self.Main.signum = self.Main.Selected_Channels_index[self.ListWidget.currentRow()]
 			self.Main.FFTFrame = MakeWindow.childframe(self.Main)
-			self.Main.FFTFrame.setWindowTitle('xxxxx')
-			self.Main.FFTFrame.setGeometry(start_xpx,start_ypx,in_xpx,in_ypx)
-			showfft.show_fft(self.Main,showfft.make_data(self.Main.FFTFrame,self.Main.EDF))
-			self.Main.win.show()
+			self.Main.FFTFrame.setGeometry(start_xpx,start_ypx,xpx,ypx)
+			self.Main.FFTFrame.setWindowFlags(Qt.Window)
+			self.Main.FFTFrame.setWindowTitle("FFT "+self.Main.EDF.getLabel(self.Main.signum))
+
+			showfft.show_fft(self.Main.FFTFrame,showfft.make_data(self.Main,self.Main.EDF))
+			self.Main.FFTFrame.show()
 			
 
 		
