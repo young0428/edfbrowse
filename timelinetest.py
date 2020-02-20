@@ -32,6 +32,7 @@ def dfname(parent):
 	a = QLabel("Detection")
 	a.setStyleSheet('color:white; background:#333333;')
 	a.setAlignment(Qt.AlignCenter)
+
 	b = QLabel("Prediction")
 	b.setStyleSheet('color:white ; background:#333333;')
 	b.setAlignment(Qt.AlignCenter)
@@ -98,10 +99,11 @@ def detPredBar(parent):
 	parent.det.enableAutoRange(axis='y', enable=False)
 	parent.det.setMouseEnabled(x=True,y=False)
 	parent.det.setLimits(minXRange=30,minYRange=1,xMin=0,xMax=parent.parent.lendy,yMin=0,yMax=1)
-	parent.det.plot(parent.parent.detx,parent.parent.detData,stepMode=True, fillLevel=0,
-					brush=(255,0,0,255),pen=pg.mkPen('r'))
-
-
+	
+	parent.det.p = parent.det.plot(parent.parent.detx,parent.parent.detData,stepMode=True,
+	 fillLevel=0,brush=(210,33,26,255),pen=pg.mkPen('#D2211A'))
+	
+	
 	#predictPlot
 	parent.pred = parent.lay.addPlot(2,1,axisItems={"bottom":parent.predtime})
 
@@ -111,9 +113,11 @@ def detPredBar(parent):
 	parent.pred.enableAutoRange(axis='y', enable=False)
 	parent.pred.setMouseEnabled(x=True,y=False)
 	parent.pred.setLimits(minXRange=30,minYRange=1,xMin=0,xMax=parent.parent.lenpy,yMin=0,yMax=1)
-	parent.pred.plot(parent.parent.predx,parent.parent.predData,stepMode=True, fillLevel=0,
-					brush=(255,0,0,255),pen=pg.mkPen((0,150,0,255)))
-
+	
+	parent.pred.p = parent.pred.plot(parent.parent.predx,parent.parent.predData,stepMode=True, fillLevel=0,
+					brush=(32,130,55,255),pen=pg.mkPen('#208237'))
+	
+	
 	#Get Viewbox
 	
 	parent.detviewbox = parent.det.getViewBox()
@@ -151,6 +155,7 @@ def detPredBar(parent):
 		self.timeline.setPos(clktime)
 		
 		self.frame.parent.playtime = clktime//(1/fre)*(1/fre)
+		
 	def MoveFinished(self,obj):
 		self.frame.parent.playtime = (obj.getXPos()//self.frame.parent.unit)/self.frame.parent.Frequency
 

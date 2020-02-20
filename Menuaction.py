@@ -1,14 +1,28 @@
 import sys
+import types
+import ctypes
+import math
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
-import pyedflib
-import MakeWindow
+import pyqtgraph as pg
+import win32api
+import win32con
+import win32gui
 import time
-import show_fft_function as showfft
-import pandas as pd
+from ctypes.wintypes import POINT
+import ctypes.wintypes
 import numpy as np
+from functools import partial
+
+import Menuaction
+import MakeWindow
+import show_fft_function as showfft
 import timelinetest as dp
+
+import pyedflib
+import pandas as pd
+import ctypes
 
 start_xpx = 20
 start_ypx = 50
@@ -33,6 +47,7 @@ def OpenFile(self):
 
 
 			self.detData = np.zeros(int(self.duration*edf.datarecords_in_file))
+			print(type(self.detData))
 			self.predData = np.zeros(int(self.duration*edf.datarecords_in_file))
 			dp.makeDataList(self)
 			MakeWindow.mkChannelSelect(self)
@@ -41,14 +56,34 @@ def OpenFile(self):
 			#emsg.setWindowTitle("File Open Error")
 			#emsg.setDetailedText("Please open .edf file");
 
+
 def OpenDet(self):
 	fname = QFileDialog.getOpenFileName(self, 'Open file', './')
 	if fname[0] :
 		if not fname[0][len(fname[0])-4:] == '.csv':
 			sys.stderr.write("Failed to Open")
 
+		data = pd.read_csv(fname[0],encoding = 'CP949',error_bad_lines=False)
+		datacol=data['data']
+		for i in range(len(datacol)):
+			self.detData[i] = datacol[i]
+			i=i+1
+		self.DPFrame.det.p.setData(self.detx,self.detData)
+
+
 def OpenPred(self):
-	pass
+	fname = QFileDialog.getOpenFileName(self, 'Open file', './')
+	if fname[0] :
+		if not fname[0][len(fname[0])-4:] == '.csv':
+			sys.stderr.write("Failed to Open")
+
+		data = pd.read_csv(fname[0],encoding = 'CP949',error_bad_lines=False)
+		datacol=data['data']
+		for i in range(len(datacol)):
+			self.detData[i] = datacol[i]
+			i=i+1
+			
+		self.DPFrame.pred.p.setData(self.predx,self.predData)
 
 def CloseFile(self):
 	for child in self.findChildren(QWidget):
@@ -59,57 +94,60 @@ def CloseFile(self):
 
 	
 def STFT(self):
-	class selectedChanelWindow(QMainWindow):
-		def __init__(self,parent=None):
-			super(selectedChanelWindow,self).__init__(parent)
-			self.Main = parent
-			self.initUI()
-		
-		def openfft(self):
-			self.close()
-			self.Main.existfft = 1
-			self.Main.signum = self.Main.Selected_Channels_index[self.ListWidget.currentRow()]
-			self.Main.FFTFrame = MakeWindow.childframe(self.Main)
-			self.Main.FFTFrame.setGeometry(start_xpx,start_ypx,xpx,ypx)
-			self.Main.FFTFrame.setWindowFlags(Qt.Window)
-			self.Main.FFTFrame.setWindowTitle("FFT "+self.Main.EDF.getLabel(self.Main.signum))
-
-			showfft.show_fft(self.Main.FFTFrame,showfft.make_data(self.Main,self.Main.EDF))
-			self.Main.FFTFrame.show()
+	if not self.Selected_Channels_index == None:
+		class selectedChanelWindow(QMainWindow):
+			def __init__(self,parent=None):
+				super(selectedChanelWindow,self).__init__(parent)
+				self.Main = parent
+				self.initUI()
 			
+			def openfft(self):
+				self.close()
+				self.Main.existfft = 1
+				self.Main.signum = self.Main.Selected_Channels_index[self.ListWidget.currentRow()]
+				self.Main.FFTFrame = MakeWindow.fftframe(self.Main)
+				self.Main.FFTFrame.setGeometry(start_xpx,start_ypx,xpx,ypx)
+				self.Main.FFTFrame.setWindowFlags(Qt.Window)
+				self.Main.FFTFrame.setWindowTitle("[ FFT ] "+self.Main.EDF.getLabel(self.Main.signum))
 
-		
-		def Cancel(self):
-			self.close()
+				showfft.show_fft(self.Main.FFTFrame,showfft.make_data(self.Main,self.Main.EDF))
+				self.Main.FFTFrame.show()
+				
 
-		def initUI(self):
-			widget = QWidget()
-			vbox = QVBoxLayout()
-			hbox = QHBoxLayout()
-			self.ListWidget = QListWidget()
-			self.ListWidget.setSelectionMode(QAbstractItemView.ExtendedSelection)
-			for index in self.Main.Selected_Channels_index:
-				item = self.ListWidget.addItem(self.Main.EDF.getLabel(index))
-
-			self.ListWidget.selectAll()
-
-			OKButton = QPushButton('OK')
-			CancelButton = QPushButton('Cancel')
-			OKButton.clicked.connect(self.openfft)
-			CancelButton.clicked.connect(self.Cancel)
-			hbox.addWidget(OKButton)
-			hbox.addWidget(CancelButton)
 			
-			vbox.addStretch(1)
-			vbox.addWidget(self.ListWidget)
-			vbox.addStretch(2)
-			vbox.addLayout(hbox)
-			widget.setLayout(vbox)
-			self.setCentralWidget(widget)
-			self.setGeometry(300,300,300,300)
-			self.show()	
+			def Cancel(self):
+				self.close()
 
-	a = selectedChanelWindow(self)
+			def initUI(self):
+				widget = QWidget()
+				vbox = QVBoxLayout()
+				hbox = QHBoxLayout()
+				self.ListWidget = QListWidget()
+				self.ListWidget.setSelectionMode(QAbstractItemView.ExtendedSelection)
+				for index in self.Main.Selected_Channels_index:
+					item = self.ListWidget.addItem(self.Main.EDF.getLabel(index))
+
+				self.ListWidget.selectAll()
+
+				OKButton = QPushButton('OK')	
+				CancelButton = QPushButton('Cancel')
+				OKButton.clicked.connect(self.openfft)
+				CancelButton.clicked.connect(self.Cancel)
+				hbox.addWidget(OKButton)
+				hbox.addWidget(CancelButton)
+				
+				vbox.addStretch(1)
+				vbox.addWidget(self.ListWidget)
+				vbox.addStretch(2)
+				vbox.addLayout(hbox)
+				widget.setLayout(vbox)
+				self.setCentralWidget(widget)
+				self.setGeometry(300,300,300,300)
+				self.show()	
+
+
+
+		a = selectedChanelWindow(self)
 		
 	"""
 	def setChannel(self):
@@ -127,21 +165,5 @@ def STFT(self):
 	"""
 		
 
-	class STFTWindow(QWidget):
-		def __init__(self,parent):
-			super(STFTWindow,self).__init__(parent)
-			#self.lbl = QLabel('This is STFT',self)
-			#self.lbl.setStyleSheet("color : red; border-style:solid; border-width: 10px; border-color:#FA8072; border-radius: 3px;background-color:#FFFFFF")
-			#self.lbl.move(0,50)
-			#self.setWindowFlags(Qt.Window | Qt.CustomizeWindowHint)
-			#
-
-
-	self.STFTwindow = STFTWindow(self)
-	#self.STFTwindow.resize(400,200)
-	#STFT_width = self.STFTwindow.frameGeometry().width()
-	#self.STFTwindow.lbl.resize(STFT_width,40)
-	#self.STFTwindow.setWindowTitle('STFT')
-	#self.STFTwindow.show()
 
 

@@ -57,7 +57,7 @@ class make_data:
 
 
 def show_fft(parent,data):
-	parent.maxpsd = max(data.psd)
+	parent.maxpsd = 70	#max(data.psd)
 	
 	parent.win = pg.GraphicsLayoutWidget(parent=parent)
 	parent.win.setGeometry(0,0,parent.geometry().width(),parent.geometry().height())
@@ -68,6 +68,8 @@ def show_fft(parent,data):
 
 	parent.ffttime = pg.AxisItem(orientation='bottom')
 	parent.ffttime.setGrid(255)
+	parent.ffttime.setTickSpacing(major=10,minor=1)
+	
 	parent.ffttime.setPen('#A0A0A0')
 
 	parent.plt1 = parent.win.addPlot(axisItems={'left':parent.ffttimeleft,'bottom':parent.ffttime})

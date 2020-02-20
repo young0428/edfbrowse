@@ -10,7 +10,7 @@ import multiprocessing
 import ctypes.wintypes
 import numpy as np
 import math
-
+import os
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
@@ -27,6 +27,7 @@ class childframe(QWidget):
 		self.parent = parent
 		self.setWindowFlags(Qt.WindowStaysOnTopHint)
 		self.initResized = False
+	
 	def setChildWidgetInfo(self):
 		self.ChildrenWidget = []
 
@@ -34,13 +35,142 @@ class childframe(QWidget):
 			self.ChildrenWidget.append(widget)
 
 		
-		self.FrameSize_width = self.size().width()
-		self.FrameSize_height = self.size().height()
+		self.FrameSize_width = self.frameGeometry().width()
+		self.FrameSize_height = self.frameGeometry().height()
 
 		self.ChildrenWidget_baseSize = []
 		for childwidget in self.ChildrenWidget:
-			self.ChildrenWidget_baseSize.append([childwidget.size().width(),childwidget.size().height()])
+			#self.ChildrenWidget_baseSize.append([childwidget.size().width(),childwidget.size().height()])
 
+			self.ChildrenWidget_baseSize.append([childwidget.geometry().width() if childwidget.geometry().width()!=0 else 1,
+												childwidget.geometry().height() if childwidget.geometry().height()!=0 else 1,
+												childwidget.geometry().x(),
+												childwidget.geometry().y()])
+
+
+	def nativeEvent(self,eventType,message):
+		msg = ctypes.wintypes.MSG.from_address(message.__int__())
+		if eventType == "windows_generic_MSG":
+			if msg.message == win32con.WM_NCLBUTTONDOWN:
+				nHittest = int(msg.wParam)
+				if nHittest in [win32con.HTCAPTION,win32con.HTBOTTOM,win32con.HTBOTTOMLEFT,win32con.HTBOTTOMRIGHT,win32con.HTLEFT,win32con.HTRIGHT,win32con.HTTOP,win32con.HTTOPLEFT,win32con.HTTOPRIGHT]:
+					self.setChildWidgetInfo()
+
+
+		return False, 0
+	
+		
+	def resizeEvent(self,e):
+		xSizeChangeRatio =1
+		ySizeChangeRatio =1
+		if self.initResized:
+			xSizeChangeRatio = (1+(self.geometry().width() - self.FrameSize_width ) / self.FrameSize_width)
+			ySizeChangeRatio = (1+(self.geometry().height() - self.FrameSize_height )/ self.FrameSize_height)
+			i=0
+			for childwidget in self.ChildrenWidget:
+				"""
+				childwidget.resize(self.ChildrenWidget_baseSize[i][0]*xSizeChangeRatio, self.ChildrenWidget_baseSize[i][1]*ySizeChangeRatio)
+				i=i+1
+				"""
+				
+				childwidget.setGeometry((self.ChildrenWidget_baseSize[i][2]*xSizeChangeRatio),
+									(self.ChildrenWidget_baseSize[i][3]*ySizeChangeRatio),
+									math.ceil(self.ChildrenWidget_baseSize[i][0]*xSizeChangeRatio),
+									math.ceil(self.ChildrenWidget_baseSize[i][1]*ySizeChangeRatio))
+				i=i+1
+		
+		else:
+			self.setChildWidgetInfo()
+			self.initResized = True
+	
+class fftframe(QWidget):
+	def __init__(self,parent=None):
+		super(fftframe,self).__init__(parent)
+		self.parent = parent
+		self.setWindowFlags(Qt.WindowStaysOnTopHint)
+		self.initResized = False
+	
+	def setChildWidgetInfo(self):
+		self.ChildrenWidget = []
+
+		for widget in self.findChildren(QWidget):
+			self.ChildrenWidget.append(widget)
+
+		
+		self.FrameSize_width = self.geometry().width()
+		self.FrameSize_height = self.geometry().height()
+
+		self.ChildrenWidget_baseSize = []
+		for childwidget in self.ChildrenWidget:
+			#self.ChildrenWidget_baseSize.append([childwidget.size().width(),childwidget.size().height()])
+
+			self.ChildrenWidget_baseSize.append([childwidget.geometry().width() if childwidget.geometry().width()!=0 else 1,
+												childwidget.geometry().height() if childwidget.geometry().height()!=0 else 1,
+												childwidget.geometry().x(),
+												childwidget.geometry().y()])
+
+
+	def nativeEvent(self,eventType,message):
+		msg = ctypes.wintypes.MSG.from_address(message.__int__())
+		if eventType == "windows_generic_MSG":
+			if msg.message == win32con.WM_NCLBUTTONDOWN:
+				nHittest = int(msg.wParam)
+				if nHittest in [win32con.HTCAPTION,win32con.HTBOTTOM,win32con.HTBOTTOMLEFT,win32con.HTBOTTOMRIGHT,win32con.HTLEFT,win32con.HTRIGHT,win32con.HTTOP,win32con.HTTOPLEFT,win32con.HTTOPRIGHT]:
+					self.setChildWidgetInfo()
+
+
+		return False, 0
+	
+		
+	def resizeEvent(self,e):
+		xSizeChangeRatio =1
+		ySizeChangeRatio =1
+		if self.initResized:
+			xSizeChangeRatio = (1+(self.geometry().width() - self.FrameSize_width ) / self.FrameSize_width)
+			ySizeChangeRatio = (1+(self.geometry().height() - self.FrameSize_height )/ self.FrameSize_height)
+			i=0
+			for childwidget in self.ChildrenWidget:
+				"""
+				childwidget.resize(self.ChildrenWidget_baseSize[i][0]*xSizeChangeRatio, self.ChildrenWidget_baseSize[i][1]*ySizeChangeRatio)
+				i=i+1
+				"""
+				
+				childwidget.setGeometry((self.ChildrenWidget_baseSize[i][2]*xSizeChangeRatio),
+									(self.ChildrenWidget_baseSize[i][3]*ySizeChangeRatio),
+									math.ceil(self.ChildrenWidget_baseSize[i][0]*xSizeChangeRatio),
+									math.ceil(self.ChildrenWidget_baseSize[i][1]*ySizeChangeRatio))
+				i=i+1
+		
+		else:
+			self.setChildWidgetInfo()
+			self.initResized = True
+	
+
+class signalframe(QWidget):
+	def __init__(self,parent=None):
+		super(signalframe,self).__init__(parent)
+		self.parent = parent
+		self.setWindowFlags(Qt.WindowStaysOnTopHint)
+		self.initResized = False
+	
+	
+	def setChildWidgetInfo(self):
+		self.ChildrenWidget = []
+
+		for widget in self.findChildren(QWidget):
+			self.ChildrenWidget.append(widget)
+
+		
+		self.FrameSize_width = self.frameGeometry().width()
+		self.FrameSize_height = self.frameGeometry().height()
+
+		self.ChildrenWidget_baseSize = []
+		for childwidget in self.ChildrenWidget:
+			#self.ChildrenWidget_baseSize.append([childwidget.size().width(),childwidget.size().height()])
+			self.ChildrenWidget_baseSize.append([childwidget.size().width() if childwidget.size().width()!=0 else 1,
+												childwidget.size().height() if childwidget.size().height()!=0 else 1,
+												childwidget.geometry().x(),
+												childwidget.geometry().y()])
 
 	def nativeEvent(self,eventType,message):
 		msg = ctypes.wintypes.MSG.from_address(message.__int__())
@@ -53,13 +183,24 @@ class childframe(QWidget):
 		return False, 0
 			
 	def resizeEvent(self,e):
+		xSizeChangeRatio =1
+		ySizeChangeRatio =1
 		if self.initResized:
 			xSizeChangeRatio = (1+(e.size().width() - self.FrameSize_width ) / self.FrameSize_width)
 			ySizeChangeRatio = (1+(e.size().height() - self.FrameSize_height )/ self.FrameSize_height)
 			i=0
 			for childwidget in self.ChildrenWidget:
-				childwidget.resize(self.ChildrenWidget_baseSize[i][0]*xSizeChangeRatio, self.ChildrenWidget_baseSize[i][1]*ySizeChangeRatio)
+				
+				#childwidget.resize(self.ChildrenWidget_baseSize[i][0]*xSizeChangeRatio, self.ChildrenWidget_baseSize[i][1]*ySizeChangeRatio)
+				#i=i+1
+
+				
+				childwidget.setGeometry((self.ChildrenWidget_baseSize[i][2]*xSizeChangeRatio),
+									(self.ChildrenWidget_baseSize[i][3]*ySizeChangeRatio),
+									math.ceil(self.ChildrenWidget_baseSize[i][0]*xSizeChangeRatio),
+									math.ceil(self.ChildrenWidget_baseSize[i][1]*ySizeChangeRatio))
 				i=i+1
+				
 		else:
 			self.setChildWidgetInfo()
 			self.initResized = True
@@ -85,7 +226,7 @@ def mkSignalWindow(self):
 				lbl = QLabel(self.parent.Selected_Chs[i])
 				lbl.setFixedWidth(lbl.sizeHint().width())
 				lbl.setScaledContents(True)
-				lbl.setStyleSheet('color:yellow; background:#333333')
+				lbl.setStyleSheet('color:white; background:#333333')
 				if i == 0:
 					LabelBox.addStretch((viewbox_height/(self.parent.Ch_num+1))-lbl.sizeHint().height()/2)
 
@@ -114,7 +255,7 @@ def mkSignalWindow(self):
 	
 	self.SignalWindow.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
 	self.SignalWindow.setGeometry(0,0,self.parent.signal_frame_width,self.parent.signal_frame_height)
-	
+
 	class TimeAxisItem(pg.AxisItem):
 		def __init__(self, frame,*args, **kwargs):
 			super().__init__(*args, **kwargs)
@@ -138,7 +279,7 @@ def mkSignalWindow(self):
 	self.SignalPlot.setXRange(0,self.parent.TimeScale*(self.parent.Frequency),padding=0)
 	self.SignalPlot.setYRange(-100,(self.parent.Ch_num-1)*100+100,padding=0)
 	self.SignalPlot.enableAutoRange(axis='xy',enable=False)
-	self.SignalPlot.setMouseEnabled(x=False,y=False)
+	self.SignalPlot.setMouseEnabled(x=True,y=True)
 	self.SignalPlot.setDownsampling(ds = self.parent.ds,auto=False,mode='subsample')
 
 	self.SignalPlot.setClipToView(True)
@@ -185,7 +326,8 @@ def mkSignalWindow(self):
 	# Move event trigger
 	proxy = QGraphicsProxyWidget()
 	button_left = QPushButton()
-	icon_left = QIcon('oneleft.png')
+	#icon_left = QIcon('oneleft.png')
+	icon_left = QIcon('<')
 	button_left.setIcon(icon_left)
 
 	proxy2 = QGraphicsProxyWidget()
@@ -205,15 +347,25 @@ def mkSignalWindow(self):
 
 	textproxy = QGraphicsProxyWidget()
 	self.textbox1 = QLineEdit()
+	self.textbox1.setReadOnly(True) 
+	self.textbox1.setStyleSheet("font-weight:bold;")
 	self.textbox1.setAlignment(Qt.AlignCenter)
 
 	textproxy2 = QGraphicsProxyWidget()
 	self.textbox2 = QLineEdit()
+	self.textbox2.setReadOnly(True)
+	self.textbox2.setStyleSheet("font-weight:bold;")
 	self.textbox2.setAlignment(Qt.AlignCenter)
+
+	textproxy3 = QGraphicsProxyWidget()
+	self.textbox3 = QLineEdit()
+	self.textbox3.setReadOnly(True)
+	self.textbox3.setStyleSheet("font-weight:bold;")
+	self.textbox3.setAlignment(Qt.AlignCenter)
 	
 	self.textbox1.setText("%d:%d:%.2f"%(self.parent.playtime//3600,(self.parent.playtime%3600)//60,((self.parent.playtime)%3600)%60))
 	self.textbox2.setText("%d:%d:%.2f"%((self.parent.playtime+self.parent.TimeScale)//3600,((self.parent.playtime+self.parent.TimeScale)%3600)//60,((self.parent.playtime+self.parent.TimeScale)%3600)%60))
-
+	self.textbox3.setText('Timescale: %.2f sec'%(self.parent.TimeScale) if self.parent.TimeScale//60 == 0 else 'Timescale: %.2f min'%(self.parent.TimeScale/60) )
 
 	
 	proxy.setWidget(button_left_u)
@@ -222,9 +374,10 @@ def mkSignalWindow(self):
 	proxy4.setWidget(button_right_u)
 	textproxy.setWidget(self.textbox1)
 	textproxy2.setWidget(self.textbox2)
+	textproxy3.setWidget(self.textbox3)
 
 	self.TestButton = self.SignalWindow.addLayout(row=2,col=0)
-	self.spaceLayout = self.SignalWindow.addLayout(row=2,col=1,colspan=8)
+	self.spaceLayout = self.SignalWindow.addLayout(row=2,col=1,colspan=3)
 	self.spaceLayout.setMaximumHeight(40)
 	self.TestButton.setMaximumHeight(40)
 	self.TestButton.setMaximumWidth(160)
@@ -232,21 +385,30 @@ def mkSignalWindow(self):
 	self.TestButton.addItem(proxy2)
 	self.TestButton.addItem(proxy3)
 	self.TestButton.addItem(proxy4)
+
 	self.textlayout = self.SignalWindow.addLayout(row=1,col=0)
-	self.spacelayout = self.SignalWindow.addLayout(row=1,col=1,colspan=7)
+	self.spacelayout = self.SignalWindow.addLayout(row=1,col=1,colspan=3)
 	self.spacelayout.setMaximumHeight(40)
+
+	self.textlayout3= self.SignalWindow.addLayout(row=1,col=4)
+
+	self.spacelayout = self.SignalWindow.addLayout(row=1,col=5,colspan=3)
+	self.spacelayout.setMaximumHeight(40)
+
 	self.textlayout2= self.SignalWindow.addLayout(row=1,col=8)
+
 	self.textlayout.setMaximumHeight(40)
 	self.textlayout.setMaximumWidth(100)
 	self.textlayout2.setMaximumHeight(40)
 	self.textlayout2.setMaximumWidth(100)
+	self.textlayout3.setMaximumHeight(40)
+	self.textlayout3.setMaximumWidth(200)
 	self.textlayout.addItem(textproxy)
 	self.textlayout2.addItem(textproxy2)
-
+	self.textlayout3.addItem(textproxy3)
 	#self.textlayout.setMaximumWidth(100)
 	#self.textlayout2.setMaximumWidth(100)
 
-	
 	self.SignalWindow.show()
 
 
@@ -394,6 +556,7 @@ def mkSignalWindow(self):
 		self.textbox1.setText("%d:%d:%.2f"%(self.parent.playtime//3600,(self.parent.playtime%3600)//60,((self.parent.playtime)%3600)%60))
 		self.textbox2.setText("%d:%d:%.2f"%((self.parent.playtime+self.parent.TimeScale)//3600,((self.parent.playtime+self.parent.TimeScale)%3600)//60,
 			((self.parent.playtime+self.parent.TimeScale)%3600)%60))
+		self.textbox3.setText('Timescale: %.2f sec'%(self.parent.TimeScale) if self.parent.TimeScale//60 == 0 else 'Timescale: %.2f min'%(self.parent.TimeScale/60))
 
 	# self = button 클래스임
 	def viewrange_changed(self):
@@ -497,20 +660,21 @@ def mkChannelSelect(self):
 						self.Main.Selected_Chs.append(i.text())
 						break
 
-			self.Main.SignalFrame = childframe(self.Main)
+			self.Main.SignalFrame = signalframe(self.Main)
 			self.Main.DPNameFrame = childframe(self.Main)
 			self.Main.DPFrame = childframe(self.Main)
-			self.Main.SignalFrame.setGeometry(-5,20,
+			self.Main.SignalFrame.setGeometry(-5,
+											20,
 											self.Main.geometry().width()+10,
-											self.Main.geometry().height()*0.8-20)
+											self.Main.geometry().height()*0.8-20)	
 			self.Main.DPNameFrame.setGeometry(-5,
 											self.Main.geometry().height()*0.79,
 											self.Main.geometry().width()*1/24+10,
-											self.Main.geometry().height()*0.2+self.Main.geometry().height()*0.02,)
+											self.Main.geometry().height()*0.22)
 			self.Main.DPFrame.setGeometry(self.Main.geometry().width()*1/24-5,
 										self.Main.geometry().height()*0.79,
 										self.Main.geometry().width()*23/24+10,
-										self.Main.geometry().height()*0.2+self.Main.geometry().height()*0.02)
+										self.Main.geometry().height()*0.22)
 			mkSignalWindow(self.Main.SignalFrame)
 			timelinetest.detPredBar(self.Main.DPFrame)
 			timelinetest.dfname(self.Main.DPNameFrame)

@@ -51,8 +51,8 @@ class EDFbrowse(QMainWindow):
 		self.initUI()
 		self.existfft=0
 		self.EDF = None
- 	
-
+		self.FFTFrame =None
+		self.Selected_Channels_index = None
 	@property
 	def Ch_num(self):
 		return self._Ch_num
@@ -97,10 +97,6 @@ class EDFbrowse(QMainWindow):
 	def LoadingPivot(self,value):
 		self._LoadingPivot = value
 
-
-
-
-	
 
 
 
@@ -182,7 +178,7 @@ class EDFbrowse(QMainWindow):
 					self.WindowChildren_baseSize = []
 					for WindowChild in self.WindowChildren:
 						self.WindowChildren_baseSize.append([WindowChild.size().width(),WindowChild.size().height(),WindowChild.geometry().x(),WindowChild.geometry().y()])
-					print('bb')
+
 			if msg.message == win32con.WM_KEYDOWN:
 				nHittest = int(msg.wParam)
 				if self.viewbox_exist:
@@ -220,31 +216,30 @@ class EDFbrowse(QMainWindow):
 					
 
 		return False, 0
+
 	
-	"""
-	def moveEvent(self,e):
-		move_x = e.pos().x() - self.Main_x
-		move_y = e.pos().y() - self.Main_y
-
-		for WindowChild in self.WindowChildren:
-			WindowChild.move(WindowChild.pos().x() + move_x, WindowChild.pos().y() + move_y)
-
-		self.Main_x = e.pos().x()
-		self.Main_y = e.pos().y()
-	
-	"""
-
 	def resizeEvent(self,e):
 		xSizeChangeRatio = (1+(e.size().width() - self.MainSize_x ) / self.MainSize_x)
 		ySizeChangeRatio = (1+(e.size().height() - self.MainSize_y )/ self.MainSize_y)
 		i=0
 		for WindowChild in self.WindowChildren:
-			WindowChild.setGeometry((self.WindowChildren_baseSize[i][2]*xSizeChangeRatio),
+			if WindowChild == self.SignalFrame:
+				print("sig frame work")
+				WindowChild.setGeometry((self.WindowChildren_baseSize[i][2]*xSizeChangeRatio),
+									(self.WindowChildren_baseSize[i][3]*ySizeChangeRatio+math.ceil(20*(1-ySizeChangeRatio))),
+									math.ceil(self.WindowChildren_baseSize[i][0]*xSizeChangeRatio),
+									math.ceil(self.WindowChildren_baseSize[i][1]*ySizeChangeRatio)-math.ceil(20*(1-ySizeChangeRatio)))
+			elif WindowChild == self.FFTFrame:
+				pass
+			else:
+				print("other frame work")
+				WindowChild.setGeometry((self.WindowChildren_baseSize[i][2]*xSizeChangeRatio),
 									(self.WindowChildren_baseSize[i][3]*ySizeChangeRatio),
 									math.ceil(self.WindowChildren_baseSize[i][0]*xSizeChangeRatio),
 									math.ceil(self.WindowChildren_baseSize[i][1]*ySizeChangeRatio))
 			i=i+1
-
+		xSizeChangeRatio=1
+		ySizeChangeRatio=1
 	
 	def on_playtimeChanged(self):
 		self.SignalFrame.PlayTimeUpdated()
@@ -264,7 +259,7 @@ class EDFbrowse(QMainWindow):
 				child.close()
 		if not self.EDF == None:
 			self.EDF._close()
-		
+			
 
 if __name__ == '__main__':
    app = QApplication(sys.argv)
