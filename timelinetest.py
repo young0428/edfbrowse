@@ -9,6 +9,8 @@ import ctypes.wintypes
 import numpy as np
 from functools import partial
 
+from pyqtgraph.Point import Point
+from pyqtgraph import functions as fn
 
 def makeDataList(self):
 
@@ -29,17 +31,18 @@ def dfname(parent):
 	
 	#VLayout.setContentsMargins(0,0,0,0)
 	
-	a = QLabel("Detection")
+	a = QLabel("Detect")
+	a.setFixedWidth(a.sizeHint().width())
 	a.setStyleSheet('color:white; background:#333333;')
 	a.setAlignment(Qt.AlignCenter)
-	b = QLabel("Prediction")
+
+	b = QLabel("Predict")
+	b.setFixedWidth(b.sizeHint().width())
+
 	b.setStyleSheet('color:white ; background:#333333;')
 	b.setAlignment(Qt.AlignCenter)
 	VLayout.addWidget(a)
 	VLayout.addWidget(b)
-	
-	
-
 	
 
 
@@ -69,20 +72,33 @@ def detPredBar(parent):
 	#window
 	#pg.setConfigOption('background','#303030')
 	parent.win = pg.GraphicsLayoutWidget(parent=parent)
-	parent.win.setGeometry(0,0,parent.geometry().width()+2,parent.geometry().height())
+	parent.win.setGeometry(0,0,parent.geometry().width(),parent.geometry().height())
 	
 	parent.lay = parent.win.addLayout(0,0)
 	parent.lay.setBorder()
 	
+	main = parent.parent
+
+	#tick making
+	tick = []
+	bigtick = []
+	smalltick = []
+	for i in range(1,main.lendy):
+		if i%300 == 0:
+			if i%3600 == 0:
+				bigtick.append((int(i),str(int(i/3600))))
+			else:
+				smalltick.append((int(i),str(int(i/3600))+':'+str(int((i%3600)//60))))
+	tick.append(bigtick)
+	tick.append(smalltick)
+
 	parent.dettime = pg.AxisItem(orientation='bottom')
-	parent.dettime.setScale(1/3600)
-	parent.dettime.setTickSpacing(major=1,minor=1/6)
+	parent.dettime.setTicks(tick)
 	parent.dettime.setGrid(255)
 	parent.dettime.setPen('#A0A0A0')
 
 	parent.predtime = pg.AxisItem(orientation='bottom')
-	parent.predtime.setScale(1/3600)
-	parent.predtime.setTickSpacing(major=1,minor=1/6)
+	parent.predtime.setTicks(tick)
 	parent.predtime.setGrid(255)
 	parent.predtime.setPen('#A0A0A0')
 
@@ -97,11 +113,12 @@ def detPredBar(parent):
 
 	parent.det.enableAutoRange(axis='y', enable=False)
 	parent.det.setMouseEnabled(x=True,y=False)
-	parent.det.setLimits(minXRange=30,minYRange=1,xMin=0,xMax=parent.parent.lendy,yMin=0,yMax=1)
-	parent.det.plot(parent.parent.detx,parent.parent.detData,stepMode=True, fillLevel=0,
-					brush=(255,0,0,255),pen=pg.mkPen('r'))
-
-
+	parent.det.setLimits(minXRange=7200,minYRange=1,xMin=0,xMax=parent.parent.lendy,yMin=0,yMax=1)
+	
+	parent.det.p = parent.det.plot(parent.parent.detx,parent.parent.detData,stepMode=True,
+	 fillLevel=0,brush=(210,33,26,255),pen=pg.mkPen('#D2211A'))
+	
+	
 	#predictPlot
 	parent.pred = parent.lay.addPlot(2,1,axisItems={"bottom":parent.predtime})
 
@@ -110,10 +127,12 @@ def detPredBar(parent):
 
 	parent.pred.enableAutoRange(axis='y', enable=False)
 	parent.pred.setMouseEnabled(x=True,y=False)
-	parent.pred.setLimits(minXRange=30,minYRange=1,xMin=0,xMax=parent.parent.lenpy,yMin=0,yMax=1)
-	parent.pred.plot(parent.parent.predx,parent.parent.predData,stepMode=True, fillLevel=0,
-					brush=(255,0,0,255),pen=pg.mkPen((0,150,0,255)))
-
+	parent.pred.setLimits(minXRange=7200,minYRange=1,xMin=0,xMax=parent.parent.lenpy,yMin=0,yMax=1)
+	
+	parent.pred.p = parent.pred.plot(parent.parent.predx,parent.parent.predData,stepMode=True, fillLevel=0,
+					brush=(32,130,55,255),pen=pg.mkPen('#208237'))
+	
+	
 	#Get Viewbox
 	
 	parent.detviewbox = parent.det.getViewBox()
@@ -138,26 +157,60 @@ def detPredBar(parent):
 	
 	
 	#InfLabel
-	pg.InfLineLabel(dettimeline)
-	pg.InfLineLabel(predtimeline)
+	dl = pg.InfLineLabel(dettimeline)
+	pl = pg.InfLineLabel(predtimeline)
+	dl.setPosition(0.5)
+	pl.setPosition(0.5)
 	parent.det.addItem(dettimeline)
 	parent.pred.addItem(predtimeline)
 
 
 
 	def mouseClickEvent(self,e):
-		fre = self.frame.parent.Frequency
+		unit = self.frame.parent.unit
 		clktime = self.mapSceneToView(e.scenePos()).x()
 		self.timeline.setPos(clktime)
 		
-		self.frame.parent.playtime = clktime//(1/fre)*(1/fre)
+		self.frame.parent.playtime = clktime//unit*unit
+	
+	def wheelEvent(self, ev, axis=None):
+		if self.CtrlPress:
+			mask = np.array(self.state['mouseEnabled'], dtype=np.float)
+			if axis is not None and axis >= 0 and axis < len(mask):
+				mv = mask[axis]
+				mask[:] = 0
+				mask[axis] = mv
+			s = ((mask * 0.02) + 1) ** (ev.delta() * self.state['wheelScaleFactor']) # actual scaling factor
+			
+			center = Point(fn.invertQTransform(self.childGroup.transform()).map(ev.pos()))
+			
+			self._resetTarget()
+			self.scaleBy(s, center)
+			self.sigRangeChangedManually.emit(self.state['mouseEnabled'])
+			ev.accept()
+		else:
+			dp_timescale = (self.viewRange()[0][1] - self.viewRange()[0][0])
+			movetime = dp_timescale*0.03
+			if ev.delta() > 0:
+				movetime = movetime * -1
+
+
+			self.setXRange(self.viewRange()[0][0] + movetime,self.viewRange()[0][1] + movetime,update = True,padding = 0)
+
+
 	def MoveFinished(self,obj):
-		self.frame.parent.playtime = (obj.getXPos()//self.frame.parent.unit)/self.frame.parent.Frequency
+		self.frame.parent.playtime = (obj.getXPos()//self.frame.parent.unit)*self.frame.parent.unit
+
+########################################################################################		
 
 	parent.detviewbox.mouseClickEvent = partial(mouseClickEvent,parent.detviewbox)	
 	parent.predviewbox.mouseClickEvent = partial(mouseClickEvent,parent.predviewbox)
+
 	parent.detviewbox.MoveFinished = partial(MoveFinished,parent.detviewbox)
 	parent.predviewbox.MoveFinished = partial(MoveFinished,parent.predviewbox)
+
+	parent.detviewbox.wheelEvent = partial(wheelEvent,parent.detviewbox)	
+	parent.predviewbox.wheelEvent = partial(wheelEvent,parent.predviewbox)
 
 	predtimeline.sigPositionChangeFinished.connect(parent.predviewbox.MoveFinished)
 	dettimeline.sigPositionChangeFinished.connect(parent.detviewbox.MoveFinished)
