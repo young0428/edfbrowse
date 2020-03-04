@@ -25,20 +25,91 @@ import win32con
 import ctypes.wintypes
 import numpy as np
 
+
+class RFbutton(QPushButton):
+	def __init__ (self,parent):
+		super(RFbutton,self).__init__(parent)
+		self.frame = parent
+		self.initUI()
+		self.frame.button_change = 0  # fixed = 0 , relative = 1
+		self.clicked.connect(self.btn_clicked)
+
+
+	def initUI(self):
+		self.setText("F")
+		self.setGeometry(5,5,25,25)
+		self.setMinimumWidth(20)
+		self.setMinimumHeight(20)
+		self.setMaximumWidth(25)
+		self.setMaximumHeight(25)
+
+
+	def btn_clicked(self):
+		if self.frame.button_change == 0:
+			self.frame.button_change = 1
+			self.setText("R")
+
+			data = make_data(self.frame.parent,self.frame.parent.EDF)
+			maxpsd = max(data.psd)
+			self.frame.plt1.setYRange(0,maxpsd)
+			self.frame.plt1.setLimits(minXRange=50,maxXRange=50,xMin=0,xMax=100,yMin=0)
+		else:
+			self.frame.button_change = 0
+			self.setText("F")
+
+			maxpsd = self.frame.maxpsd
+			self.frame.plt1.setYRange(0,maxpsd)
+			self.frame.plt1.setLimits(minXRange=50,maxXRange=50,xMin=0,xMax=100,yMin=0)
+
+
+class scalebutton(QPushButton):
+	def __init__ (self,parent):
+		super(scalebutton,self).__init__(parent)
+		self.frame = parent	
+		self.initUI()
+		self.clicked.connect(self.showDialog)
+
+	def initUI(self):
+		self.setText("Max PSD")
+		self.setGeometry(5,self.frame.frameGeometry().height()-30,120,25)
+		self.setMinimumWidth(110)
+		self.setMaximumWidth(120)
+		self.setMinimumHeight(20)
+		self.setMaximumHeight(25)
+
+	def showDialog(self):
+		setpsd, ok = QInputDialog.getDouble(self, 'Set Scale','Current Scale: '+str(self.frame.maxpsd))
+
+		if ok:
+			self.frame.maxpsd = setpsd
+			self.frame.plt1.setYRange(0,setpsd)
+
+
+
 def getplaytimechanged(self):
 	data = make_data(self,self.EDF)
+
+	if self.FFTFrame.button_change == 1:
+		maxpsd = max(data.psd)
+		self.FFTFrame.plt1.setYRange(0,maxpsd)
+		self.FFTFrame.plt1.setLimits(minXRange=50,maxXRange=50,xMin=0,xMax=100,yMin=0)
 	self.FFTFrame.plt1.p.setData(data.bins,data.psd)
 
 def gettimescalechanged(self):
 	data = make_data(self,self.EDF)
+	
+	if self.FFTFrame.button_change == 1:
+		maxpsd = max(data.psd)
+		self.FFTFrame.plt1.setYRange(0,maxpsd)
+		self.FFTFrame.plt1.setLimits(minXRange=50,maxXRange=50,xMin=0,xMax=100,yMin=0)
 	self.FFTFrame.plt1.p.setData(data.bins,data.psd)
-
 
 class make_data:
 	def __init__(self,main,EDF):
 		self.playtime = main.playtime
 		self.timescale = main.TimeScale
 		self.signum = main.signum
+
 
 		instant_list = [self.signum]
 		prefft = get_signal_data(EDF, self.playtime, self.timescale, instant_list)
@@ -55,8 +126,8 @@ class make_data:
 
 
 
-
 def show_fft(parent,data):
+
 	parent.maxpsd = 70	#max(data.psd)
 	
 	parent.win = pg.GraphicsLayoutWidget(parent=parent)
@@ -80,6 +151,10 @@ def show_fft(parent,data):
 	parent.plt1.setLabel('left', text='PSD', units='uV^2/Hz')
 	parent.plt1.enableAutoRange(axis='xy', enable=False)
 	parent.plt1.setYRange(0,parent.maxpsd)
-	parent.plt1.setLimits(minXRange=50,maxXRange=50,xMin=0,xMax=100,yMin=0,yMax=5+parent.maxpsd)
+	parent.plt1.setLimits(minXRange=50,maxXRange=50,xMin=0,xMax=100,yMin=0)
 	parent.plt1.setMouseEnabled(x=False,y=False)
 	parent.plt1.p = parent.plt1.plot(data.bins,data.psd,stepMode=True, fillLevel=0, brush=(0,0,0,150),pen=pg.mkPen(color='g',width=0.6))
+
+
+	btn = RFbutton(parent)
+	btn2 = scalebutton(parent)

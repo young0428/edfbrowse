@@ -25,6 +25,7 @@ class EDFbrowse(QMainWindow):
 	TimeScaleChanged = pyqtSignal()
 	Ch_numChanged = pyqtSignal()
 	playtimeChanged = pyqtSignal()
+	ctrl_release = pyqtSignal()
 
 	def __init__(self,parent=None):
 		super(EDFbrowse,self).__init__(parent)
@@ -47,12 +48,17 @@ class EDFbrowse(QMainWindow):
 		self.remove = False
 		self.jump = False
 		self.viewbox_exist = False
+		self.max_playtime =6000
 		self.ds = 4
-		self.initUI()
-		self.existfft=0
+		self.existfft=0 
+		self.sigexist = False
 		self.EDF = None
 		self.FFTFrame =None
 		self.Selected_Channels_index = None
+		self.ChannelOpen = False
+		self.initUI()
+
+
 	@property
 	def Ch_num(self):
 		return self._Ch_num
@@ -81,6 +87,8 @@ class EDFbrowse(QMainWindow):
 	def playtime(self,value):
 		if value < 0 :
 			self._playtime = 0
+		elif value+self._TimeScale > self.max_playtime:
+			self._playtime = self.max_playtime-self._TimeScale
 		else:
 			if abs(value - self._playtime) > self._TimeScale*2:
 				self.jump = True
@@ -112,32 +120,39 @@ class EDFbrowse(QMainWindow):
 		self.CloseFile = types.MethodType(Menuaction.CloseFile,self)
 		closeAction.triggered.connect(self.CloseFile)
 
-		openDetAction = QAction('Open Detection',self)
-		openDetAction.setShortcut('Ctrl+D')
-		self.OpenDet = types.MethodType(Menuaction.OpenDet,self)
-		openDetAction.triggered.connect(self.OpenDet)
-
-		openPredAction = QAction('Open Prediction',self)
-		openPredAction.setShortcut('Ctrl+P')
-		self.OpenPred = types.MethodType(Menuaction.OpenPred,self)
-		openPredAction.triggered.connect(self.OpenPred)
+		openAnalAction = QAction('Open Analysis',self)
+		openAnalAction.setShortcut('Ctrl+A')
+		self.OpenDp = types.MethodType(Menuaction.OpenDp,self)
+		openAnalAction.triggered.connect(self.OpenDp)
 
 		STFTAction = QAction('Powerspectrum',self)
 		STFTAction.setShortcut('Alt+P')
 		self.STFT = types.MethodType(Menuaction.STFT,self)
 		STFTAction.triggered.connect(self.STFT)
-		
+
+		memoAction = QAction('Memo',self)
+		memoAction.setShortcut('Alt+M')
+		self.memo = types.MethodType(Menuaction.memo,self)
+		memoAction.triggered.connect(self.memo)
+
+		saveAction = QAction('Save',self)
+		saveAction.setShortcut('Ctrl+S')
+		self.save = types.MethodType(Menuaction.save,self)
+		saveAction.triggered.connect(self.save)
+
 
 		# 메인 윈도우 메뉴바
-		menubar = self.menuBar()
-		menubar.setNativeMenuBar(False)
-		fileMenu = menubar.addMenu('&File')
+		self.menubar = self.menuBar()
+		self.menubar.setNativeMenuBar(False)
+		fileMenu = self.menubar.addMenu('&File')
 		fileMenu.addAction(openAction)
 		fileMenu.addAction(closeAction)
-		fileMenu.addAction(openDetAction)
-		fileMenu.addAction(openPredAction)
-		fileMenu = menubar.addMenu('&Tools')
+		fileMenu.addAction(openAnalAction)
+		fileMenu.addAction(saveAction)
+		fileMenu = self.menubar.addMenu('&Tools')
 		fileMenu.addAction(STFTAction)
+		fileMenu.addAction(memoAction)
+
 		#self.setWindowFlags(Qt.CustomizeWindowHint)
 		self.setWindowTitle('EDFbrowser')
 		self.screen = QDesktopWidget().availableGeometry()
@@ -145,9 +160,9 @@ class EDFbrowse(QMainWindow):
 		self.MainSize_x = self.size().width()
 		self.MainSize_y = self.size().height()
 
-		
-		self.resize(self.screen.width(),self.screen.height())
+		#self.setGeometry(self.MainSize_x//4,self.MainSize_y//4,self.MainSize_x//2,self.MainSize_y//2)
 		self.showMaximized()
+		#memotable.mkbtn(self)
 
 				
 		#self.SignalWindow.setWindowFlags(Qt.FramelessWindowHint)
@@ -160,7 +175,6 @@ class EDFbrowse(QMainWindow):
 				if nHittest in [win32con.HTMAXBUTTON,win32con.HTMINBUTTON,win32con.HTCAPTION,win32con.HTBOTTOM,win32con.HTBOTTOMLEFT,win32con.HTBOTTOMRIGHT,win32con.HTLEFT,win32con.HTRIGHT,win32con.HTTOP,win32con.HTTOPLEFT,win32con.HTTOPRIGHT]:
 					self.WindowChildren = []
 
-
 					for child in self.findChildren(QWidget):
 						if 'frame' in str(child).lower():
 							self.WindowChildren.append(child)
@@ -172,18 +186,34 @@ class EDFbrowse(QMainWindow):
 						self.MainSize_y = self.size().height()
 						for childframe in self.WindowChildren:
 							childframe.setChildWidgetInfo()
-						print(self.MainSize_x)
-						print(self.MainSize_y)
 
 					self.WindowChildren_baseSize = []
 					for WindowChild in self.WindowChildren:
 						self.WindowChildren_baseSize.append([WindowChild.size().width(),WindowChild.size().height(),WindowChild.geometry().x(),WindowChild.geometry().y()])
+			
+			elif msg.message == win32con.WM_NCLBUTTONDBLCLK:
+				for child in self.findChildren(QWidget):
+					if 'frame' in str(child).lower():
+						self.WindowChildren.append(child)
+						child.setChildWidgetInfo()
+					
+				self.MainSize_x = self.size().width()
+				self.MainSize_y = self.size().height()
+				for childframe in self.WindowChildren:
+					childframe.setChildWidgetInfo()
+
+
+				self.WindowChildren_baseSize = []
+				for WindowChild in self.WindowChildren:
+					self.WindowChildren_baseSize.append([WindowChild.size().width(),WindowChild.size().height(),WindowChild.geometry().x(),WindowChild.geometry().y()])
 
 			if msg.message == win32con.WM_KEYDOWN:
 				nHittest = int(msg.wParam)
 				if self.viewbox_exist:
 					if nHittest == win32con.VK_CONTROL:
 						self.SignalFrame.PlotViewBox.CtrlPress = True
+						self.DPFrame.detviewbox.CtrlPress = True
+						self.DPFrame.predviewbox.CtrlPress = True
 					if nHittest == win32con.VK_RIGHT:
 						if self.SignalFrame.PlotViewBox.CtrlPress:
 							self.btn_click = True
@@ -202,16 +232,23 @@ class EDFbrowse(QMainWindow):
 							self.btn_click = True
 							self.playtime -= 1
 							self.btn_click = False
+				
+
+
 
 			if msg.message == win32con.WM_KEYUP:
 				nHittest = int(msg.wParam)
 				if self.viewbox_exist:
 					if nHittest == win32con.VK_CONTROL:
 						self.SignalFrame.PlotViewBox.CtrlPress = False
+						self.DPFrame.detviewbox.CtrlPress = False
+						self.DPFrame.predviewbox.CtrlPress = False
 						if self.SignalFrame.dragging:
 							self.SignalFrame.UpdatePlotting.StartUpdate(0)
 							self.SignalFrame.UpdatePlotting.StartUpdate(1)
 							self.SignalFrame.dragging = False
+						
+						self.ctrl_release.emit()
 					
 					
 
@@ -224,15 +261,13 @@ class EDFbrowse(QMainWindow):
 		i=0
 		for WindowChild in self.WindowChildren:
 			if WindowChild == self.SignalFrame:
-				print("sig frame work")
 				WindowChild.setGeometry((self.WindowChildren_baseSize[i][2]*xSizeChangeRatio),
-									(self.WindowChildren_baseSize[i][3]*ySizeChangeRatio+math.ceil(20*(1-ySizeChangeRatio))),
+									(self.WindowChildren_baseSize[i][3]*ySizeChangeRatio+math.ceil(self.menubar.height()*(1-ySizeChangeRatio))),
 									math.ceil(self.WindowChildren_baseSize[i][0]*xSizeChangeRatio),
-									math.ceil(self.WindowChildren_baseSize[i][1]*ySizeChangeRatio)-math.ceil(20*(1-ySizeChangeRatio)))
+									math.ceil(self.WindowChildren_baseSize[i][1]*ySizeChangeRatio)-math.ceil(self.menubar.height()*(1-ySizeChangeRatio)))
 			elif WindowChild == self.FFTFrame:
 				pass
 			else:
-				print("other frame work")
 				WindowChild.setGeometry((self.WindowChildren_baseSize[i][2]*xSizeChangeRatio),
 									(self.WindowChildren_baseSize[i][3]*ySizeChangeRatio),
 									math.ceil(self.WindowChildren_baseSize[i][0]*xSizeChangeRatio),
@@ -241,6 +276,7 @@ class EDFbrowse(QMainWindow):
 		xSizeChangeRatio=1
 		ySizeChangeRatio=1
 	
+
 	def on_playtimeChanged(self):
 		self.SignalFrame.PlayTimeUpdated()
 		
@@ -254,16 +290,25 @@ class EDFbrowse(QMainWindow):
 			showfft.gettimescalechanged(self)
 
 	def closeEvent(self,e):
+		msgbox=QMessageBox(self)
+		ok = msgbox.question(self,'', 'Do you want to quit?', QMessageBox.Yes | QMessageBox.No)
+		if ok==QMessageBox.Yes:
+			pass
+		else:
+			e.ignore()
 		for child in self.findChildren(QWidget):
 			if 'frame' in str(child).lower():
+				
 				child.close()
+				if child.fail_to_close:
+					e.ignore()
+					break
 		if not self.EDF == None:
 			self.EDF._close()
-			
 
 if __name__ == '__main__':
-   app = QApplication(sys.argv)
-   ex = EDFbrowse()
-   ex.playtimeChanged.connect(ex.on_playtimeChanged)
-   ex.TimeScaleChanged.connect(ex.on_TimeScaleChanged)
-   sys.exit(app.exec_())
+	app = QApplication(sys.argv)
+	ex = EDFbrowse()
+	ex.playtimeChanged.connect(ex.on_playtimeChanged)
+	ex.TimeScaleChanged.connect(ex.on_TimeScaleChanged)
+	sys.exit(app.exec_())
