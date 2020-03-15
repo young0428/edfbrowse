@@ -1,7 +1,6 @@
 import sys
 import types
 import ctypes
-import math
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
@@ -29,6 +28,7 @@ class EDFbrowse(QMainWindow):
 	def __init__(self,parent=None):
 		super(EDFbrowse,self).__init__(parent)
 		#self.eventType = "windows_generic_MSG"
+
 		self.Mainpointer = self
 		self.WindowChildren = []
 		self.Main_x = 0
@@ -36,6 +36,7 @@ class EDFbrowse(QMainWindow):
 		self.MainSize_x = 0
 		self.MainSize_y = 0
 		self.Frequency = 200
+
 		self._Ch_num = 20
 		self._playtime = 0
 		self._TimeScale = 10
@@ -51,8 +52,8 @@ class EDFbrowse(QMainWindow):
 		self.initUI()
 		self.existfft=0
 		self.EDF = None
-		self.FFTFrame =None
-		self.Selected_Channels_index = None
+ 	
+
 	@property
 	def Ch_num(self):
 		return self._Ch_num
@@ -100,9 +101,11 @@ class EDFbrowse(QMainWindow):
 
 
 
-	def initUI(self):
+	
 
-		#self.setStyleSheet('background:#333333;')
+
+
+	def initUI(self):
 		openAction = QAction('Open EDF',self)
 		openAction.setShortcut('Ctrl+O')
 		self.OpenFile = types.MethodType(Menuaction.OpenFile,self)
@@ -139,7 +142,7 @@ class EDFbrowse(QMainWindow):
 		fileMenu = menubar.addMenu('&Tools')
 		fileMenu.addAction(STFTAction)
 		#self.setWindowFlags(Qt.CustomizeWindowHint)
-		self.setWindowTitle('EDFbrowser')
+		self.setWindowTitle('Epileptic Seizure Status Chart')
 		self.screen = QDesktopWidget().availableGeometry()
 		self.resize(self.screen.width(),self.screen.height())
 		self.MainSize_x = self.size().width()
@@ -149,7 +152,7 @@ class EDFbrowse(QMainWindow):
 		self.resize(self.screen.width(),self.screen.height())
 		self.showMaximized()
 
-				
+	
 		#self.SignalWindow.setWindowFlags(Qt.FramelessWindowHint)
 
 	def nativeEvent(self,eventType,message):
@@ -157,28 +160,25 @@ class EDFbrowse(QMainWindow):
 		if eventType == "windows_generic_MSG":
 			if msg.message == win32con.WM_NCLBUTTONDOWN:
 				nHittest = int(msg.wParam)
-				if nHittest in [win32con.HTMAXBUTTON,win32con.HTMINBUTTON,win32con.HTCAPTION,win32con.HTBOTTOM,win32con.HTBOTTOMLEFT,win32con.HTBOTTOMRIGHT,win32con.HTLEFT,win32con.HTRIGHT,win32con.HTTOP,win32con.HTTOPLEFT,win32con.HTTOPRIGHT]:
+				if nHittest in [win32con.HTCAPTION,win32con.HTBOTTOM,win32con.HTBOTTOMLEFT,win32con.HTBOTTOMRIGHT,win32con.HTLEFT,win32con.HTRIGHT,win32con.HTTOP,win32con.HTTOPLEFT,win32con.HTTOPRIGHT]:
 					self.WindowChildren = []
+
 
 
 					for child in self.findChildren(QWidget):
 						if 'frame' in str(child).lower():
 							self.WindowChildren.append(child)
 							child.setChildWidgetInfo()
-					
+
 					if not nHittest == win32con.HTCAPTION:
-						
 						self.MainSize_x = self.size().width()
 						self.MainSize_y = self.size().height()
 						for childframe in self.WindowChildren:
 							childframe.setChildWidgetInfo()
-						print(self.MainSize_x)
-						print(self.MainSize_y)
 
 					self.WindowChildren_baseSize = []
 					for WindowChild in self.WindowChildren:
 						self.WindowChildren_baseSize.append([WindowChild.size().width(),WindowChild.size().height(),WindowChild.geometry().x(),WindowChild.geometry().y()])
-
 			if msg.message == win32con.WM_KEYDOWN:
 				nHittest = int(msg.wParam)
 				if self.viewbox_exist:
@@ -216,30 +216,31 @@ class EDFbrowse(QMainWindow):
 					
 
 		return False, 0
-
 	
+	"""
+	def moveEvent(self,e):
+		move_x = e.pos().x() - self.Main_x
+		move_y = e.pos().y() - self.Main_y
+
+		for WindowChild in self.WindowChildren:
+			WindowChild.move(WindowChild.pos().x() + move_x, WindowChild.pos().y() + move_y)
+
+		self.Main_x = e.pos().x()
+		self.Main_y = e.pos().y()
+	
+	"""
+
 	def resizeEvent(self,e):
 		xSizeChangeRatio = (1+(e.size().width() - self.MainSize_x ) / self.MainSize_x)
 		ySizeChangeRatio = (1+(e.size().height() - self.MainSize_y )/ self.MainSize_y)
 		i=0
 		for WindowChild in self.WindowChildren:
-			if WindowChild == self.SignalFrame:
-				print("sig frame work")
-				WindowChild.setGeometry((self.WindowChildren_baseSize[i][2]*xSizeChangeRatio),
-									(self.WindowChildren_baseSize[i][3]*ySizeChangeRatio+math.ceil(20*(1-ySizeChangeRatio))),
-									math.ceil(self.WindowChildren_baseSize[i][0]*xSizeChangeRatio),
-									math.ceil(self.WindowChildren_baseSize[i][1]*ySizeChangeRatio)-math.ceil(20*(1-ySizeChangeRatio)))
-			elif WindowChild == self.FFTFrame:
-				pass
-			else:
-				print("other frame work")
-				WindowChild.setGeometry((self.WindowChildren_baseSize[i][2]*xSizeChangeRatio),
-									(self.WindowChildren_baseSize[i][3]*ySizeChangeRatio),
-									math.ceil(self.WindowChildren_baseSize[i][0]*xSizeChangeRatio),
-									math.ceil(self.WindowChildren_baseSize[i][1]*ySizeChangeRatio))
+			WindowChild.setGeometry(int(self.WindowChildren_baseSize[i][2]*xSizeChangeRatio),
+									int(self.WindowChildren_baseSize[i][3]*ySizeChangeRatio),
+									self.WindowChildren_baseSize[i][0]*xSizeChangeRatio,
+									self.WindowChildren_baseSize[i][1]*ySizeChangeRatio)
 			i=i+1
-		xSizeChangeRatio=1
-		ySizeChangeRatio=1
+
 	
 	def on_playtimeChanged(self):
 		self.SignalFrame.PlayTimeUpdated()
@@ -259,7 +260,7 @@ class EDFbrowse(QMainWindow):
 				child.close()
 		if not self.EDF == None:
 			self.EDF._close()
-			
+		
 
 if __name__ == '__main__':
    app = QApplication(sys.argv)

@@ -24,18 +24,29 @@ def dfname(parent):
 	container.setGeometry(0,0,parent.geometry().width(),parent.geometry().height())
 
 	VLayout = QVBoxLayout()
+<<<<<<< Updated upstream
+	VLayout.setContentsMargins(parent.geometry().width()*0.3,0,0,0)
+=======
 	VLayout.setContentsMargins(parent.geometry().width()*0.1,0,0,0)
+	VLayout.setAlignment(Qt.AlignHCenter)
+>>>>>>> Stashed changes
 	container.setLayout(VLayout)
-	
+
 	#VLayout.setContentsMargins(0,0,0,0)
 	
 	a = QLabel("Detection")
 	a.setStyleSheet('color:white; background:#333333;')
 	a.setAlignment(Qt.AlignCenter)
-
+<<<<<<< Updated upstream
 	b = QLabel("Prediction")
+=======
+
+	b = QLabel("Predict")
+	b.setFixedWidth(b.sizeHint().width())
+>>>>>>> Stashed changes
 	b.setStyleSheet('color:white ; background:#333333;')
 	b.setAlignment(Qt.AlignCenter)
+
 	VLayout.addWidget(a)
 	VLayout.addWidget(b)
 	
@@ -75,6 +86,7 @@ def detPredBar(parent):
 	parent.lay = parent.win.addLayout(0,0)
 	parent.lay.setBorder()
 	
+<<<<<<< Updated upstream
 	parent.dettime = pg.AxisItem(orientation='bottom')
 	parent.dettime.setScale(1/3600)
 	parent.dettime.setTickSpacing(major=1,minor=1/6)
@@ -85,39 +97,90 @@ def detPredBar(parent):
 	parent.predtime.setScale(1/3600)
 	parent.predtime.setTickSpacing(major=1,minor=1/6)
 	parent.predtime.setGrid(255)
+=======
+	main = parent.parent
+
+	#tick making
+	tick = []
+	bigtick = []
+	smalltick = []
+	for i in range(1,main.lendy):
+		if i%60 == 0:
+			smalltick.append((int(i),str(i%60)))
+			if i%300 == 0:
+				if i%3600 == 0:
+					bigtick.append((int(i),str(int(i/3600))))
+				else:
+					smalltick.append((int(i),str(int(i/3600))+':'+str(int((i%3600)//60))))
+				
+	tick.append(bigtick)
+	tick.append(smalltick)
+
+	parent.dettime = pg.AxisItem(orientation='bottom')
+	parent.dettime.setTicks(tick)
+	parent.dettime.setGrid(100)
+	parent.dettime.setPen('#A0A0A0')
+
+	parent.predtime = pg.AxisItem(orientation='bottom')
+	parent.predtime.setTicks(tick)
+	parent.predtime.setGrid(100)
+>>>>>>> Stashed changes
 	parent.predtime.setPen('#A0A0A0')
 
 
 
 
 	#DetectPlot
-	parent.det = parent.lay.addPlot(1,1,axisItems={"bottom":parent.dettime})
-
+	parent.det = parent.lay.addPlot(1,1,axisItems={"bottom":parent.dettime,"bottom":parent.predtime})
+	parent.det.hideButtons()
+	parent.det.setClipToView(True)
 	parent.det.showAxis('bottom',show=True)
-	parent.det.showAxis('left',show=False)
+	parent.det.showAxis('left',show=True)
 
 	parent.det.enableAutoRange(axis='y', enable=False)
 	parent.det.setMouseEnabled(x=True,y=False)
+<<<<<<< Updated upstream
 	parent.det.setLimits(minXRange=30,minYRange=1,xMin=0,xMax=parent.parent.lendy,yMin=0,yMax=1)
-	
-	parent.det.p = parent.det.plot(parent.parent.detx,parent.parent.detData,stepMode=True,
-	 fillLevel=0,brush=(210,33,26,255),pen=pg.mkPen('#D2211A'))
-	
-	
-	#predictPlot
-	parent.pred = parent.lay.addPlot(2,1,axisItems={"bottom":parent.predtime})
+	parent.det.plot(parent.parent.detx,parent.parent.detData,stepMode=True, fillLevel=0,
+					brush=(255,0,0,255),pen=pg.mkPen('r'))
 
+
+=======
+	parent.det.setLimits(minXRange=3600,xMin=0,xMax=parent.parent.lendy,yMin=-1,yMax=1)
+	parent.det.setYRange(-1, 1, padding=None, update=False)
+
+	parent.det.p = parent.det.plot(parent.parent.detx,parent.parent.detData,stepMode=True,
+	 fillLevel=0,brush=(210,33,26,100),pen=pg.mkPen(color=(210,33,26,100)))
+
+
+
+	
+	
+>>>>>>> Stashed changes
+	#predictPlot
+	parent.pred = parent.det
+	"""
+	parent.pred = parent.lay.addPlot(2,1,axisItems={"bottom":parent.predtime})
+	
 	parent.pred.showAxis('bottom',show=True)
 	parent.pred.showAxis('left',show=False)
 
 	parent.pred.enableAutoRange(axis='y', enable=False)
 	parent.pred.setMouseEnabled(x=True,y=False)
+<<<<<<< Updated upstream
 	parent.pred.setLimits(minXRange=30,minYRange=1,xMin=0,xMax=parent.parent.lenpy,yMin=0,yMax=1)
+	parent.pred.plot(parent.parent.predx,parent.parent.predData,stepMode=True, fillLevel=0,
+					brush=(255,0,0,255),pen=pg.mkPen((0,150,0,255)))
+
+=======
+	parent.pred.setLimits(minXRange=3600,minYRange=1,xMin=0,xMax=parent.parent.lenpy,yMin=0,yMax=1)
+	"""
+	parent.pred.pr = parent.det.plot(parent.parent.predx,parent.parent.predData,stepMode=True, fillLevel=0,
+					brush=(32,130,55,100),pen=pg.mkPen(color=(32,130,55,100)))
+
 	
-	parent.pred.p = parent.pred.plot(parent.parent.predx,parent.parent.predData,stepMode=True, fillLevel=0,
-					brush=(32,130,55,255),pen=pg.mkPen('#208237'))
 	
-	
+>>>>>>> Stashed changes
 	#Get Viewbox
 	
 	parent.detviewbox = parent.det.getViewBox()
@@ -142,8 +205,15 @@ def detPredBar(parent):
 	
 	
 	#InfLabel
+<<<<<<< Updated upstream
 	pg.InfLineLabel(dettimeline)
 	pg.InfLineLabel(predtimeline)
+=======
+	dl = pg.InfLineLabel(dettimeline)
+	pl = pg.InfLineLabel(predtimeline)
+	dl.setPosition(0.75)
+	pl.setPosition(0.25)
+>>>>>>> Stashed changes
 	parent.det.addItem(dettimeline)
 	parent.pred.addItem(predtimeline)
 
@@ -154,8 +224,40 @@ def detPredBar(parent):
 		clktime = self.mapSceneToView(e.scenePos()).x()
 		self.timeline.setPos(clktime)
 		
+<<<<<<< Updated upstream
 		self.frame.parent.playtime = clktime//(1/fre)*(1/fre)
-		
+=======
+		self.frame.parent.playtime = clktime//unit*unit
+	
+	def wheelEvent(self, ev, axis=None):
+		if self.CtrlPress:
+			mask = np.array(self.state['mouseEnabled'], dtype=np.float)
+			if axis is not None and axis >= 0 and axis < len(mask):
+				mv = mask[axis]
+				mask[:] = 0
+				mask[axis] = mv
+			s = ((mask * 0.02) + 1) ** (ev.delta() * self.state['wheelScaleFactor']) # actual scaling factor
+			
+			center = Point(fn.invertQTransform(self.childGroup.transform()).map(ev.pos()))
+			
+			self._resetTarget()
+			self.scaleBy(s, center)
+			self.sigRangeChangedManually.emit(self.state['mouseEnabled'])
+			ev.accept()
+		else:
+			dp_timescale = (self.viewRange()[0][1] - self.viewRange()[0][0])
+			movetime = dp_timescale*0.03
+			if ev.delta() > 0:
+				movetime = movetime * -1
+
+
+			self.setXRange(self.viewRange()[0][0] + movetime,self.viewRange()[0][1] + movetime,update = True,padding = 0)
+
+	
+
+
+
+>>>>>>> Stashed changes
 	def MoveFinished(self,obj):
 		self.frame.parent.playtime = (obj.getXPos()//self.frame.parent.unit)/self.frame.parent.Frequency
 
