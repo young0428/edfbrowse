@@ -20,6 +20,262 @@ from functools import partial
 
 import Menuaction
 import timelinetest
+<<<<<<< Updated upstream
+=======
+import memotable as memo
+
+class regionlinelabel(pg.InfLineLabel):
+	def __init__(self, line, main,text="", movable=False, position=0.8, anchors=None, **kwds):
+		self.line = line
+		self.movable = movable
+		self.moving = False
+		self.orthoPos = position  # text will always be placed on the line at a position relative to view bounds
+		self.format = text
+		self.have_a_pole = False
+		self.line.sigPositionChanged.connect(self.valueChanged)
+		self._endpoints = (None, None)
+		
+		if anchors is None:
+			# automatically pick sensible anchors
+			rax = kwds.get('rotateAxis', None)
+			if rax is not None:
+				if tuple(rax) == (1,0):
+					anchors = [(0.5, 0), (0.5, 1)]
+				else:
+					anchors = [(0, 0.5), (1, 0.5)]
+			else:
+				if line.angle % 180 == 0:
+					anchors = [(0.5, 0), (0.5, 1)]
+				else:
+					anchors = [(0, 0.5), (1, 0.5)]
+			
+		self.anchors = anchors
+		pg.TextItem.__init__(self, **kwds)
+		self.setParentItem(line)
+		self.main = main
+		self.setColor('#FFFFFF')
+
+		self.valueChanged()
+		
+	def valueChanged(self):
+		if not self.isVisible():
+			return
+		value = self.line.value()
+		self.format = '%02d:%02d:%02d.%02d'%((value/self.main.Frequency)//3600,(value/self.main.Frequency)%3600//60,(value/self.main.Frequency)%60//1,(value/self.main.Frequency)%1*100//1)
+		self.setText(self.format.format(value=value))
+		self.updatePosition()
+
+
+
+class mkrbtnlist:
+	def __init__(self,main):
+		self.main=main
+		self.initUI()
+		self.on_drag = False
+		self.no_drag = True
+		self.ctrl_start = False
+		self.z=0
+		self.start_copy = None
+
+		
+	def initUI(self):
+
+		self.menu = QMenu()
+		self.memoaction = self.menu.addAction('Memo')
+		self.memoaction.triggered.connect(self.tomemo)
+
+
+		self.detchangeaction = self.menu.addMenu('Change Detection Data')
+		self.dettozero = self.detchangeaction.addAction('False')
+		self.dettoone = self.detchangeaction.addAction('True')
+		self.dettozero.triggered.connect(self.dtz)
+		self.dettoone.triggered.connect(self.dto)
+
+
+		self.predchangeaction = self.menu.addMenu('Change Prediction Data')
+		self.predtozero = self.predchangeaction.addAction('False')
+		self.predtoone = self.predchangeaction.addAction('True')
+		self.predtozero.triggered.connect(self.ptz)
+		self.predtoone.triggered.connect(self.pto)
+
+		self.main.ctrl_release.connect(self.control_release)
+
+	def tomemo(self):
+		self.main.memo()
+		self.main.SignalFrame.addF(self.timestart.format,self.timeend.format)
+		
+	def dtz(self):
+		if self.regionstart.x() < self.regionend.x():
+			start = int(self.vb.mapToView(self.regionstart).x()*self.main.unit)
+			end = math.ceil(self.vb.mapToView(self.regionend).x()*self.main.unit)
+		else:
+			end = math.ceil(self.vb.mapToView(self.regionstart).x()*self.main.unit)
+			start = int(self.vb.mapToView(self.regionend).x()*self.main.unit)
+
+		self.main.detData[start:end] = list(np.zeros(end-start))
+		self.main.DPFrame.det.p.setData(self.main.detx,self.main.detData)
+		Menuaction.detdataplot(self.main)
+	def dto(self):
+		if self.regionstart.x() < self.regionend.x():
+			start = int(self.vb.mapToView(self.regionstart).x()*self.main.unit)
+			end = math.ceil(self.vb.mapToView(self.regionend).x()*self.main.unit)
+		else:
+			end = math.ceil(self.vb.mapToView(self.regionstart).x()*self.main.unit)
+			start = int(self.vb.mapToView(self.regionend).x()*self.main.unit)
+
+		self.main.detData[start:end] = list(np.ones(end-start))
+		self.main.DPFrame.det.p.setData(self.main.detx,self.main.detData)
+		Menuaction.detdataplot(self.main)
+	def ptz(self):
+		if self.regionstart.x() < self.regionend.x():
+			start = int(self.vb.mapToView(self.regionstart).x()*self.main.unit)
+			end = math.ceil(self.vb.mapToView(self.regionend).x()*self.main.unit)
+		else:
+			end = math.ceil(self.vb.mapToView(self.regionstart).x()*self.main.unit)
+			start = int(self.vb.mapToView(self.regionend).x()*self.main.unit)
+
+		self.main.predData[start:end] = list(np.zeros(end-start))
+		self.main.DPFrame.pred.pr.setData(self.main.predx,-self.main.predData)
+		Menuaction.preddataplot(self.main)
+	def pto(self):
+		if self.regionstart.x() < self.regionend.x():
+			start = int(self.vb.mapToView(self.regionstart).x()*self.main.unit)
+			end = math.ceil(self.vb.mapToView(self.regionend).x()*self.main.unit)
+		else:
+			end = math.ceil(self.vb.mapToView(self.regionstart).x()*self.main.unit)
+			start = int(self.vb.mapToView(self.regionend).x()*self.main.unit)
+
+		self.main.predData[start:end] = list(np.ones(end-start))
+		self.main.DPFrame.pred.pr.setData(self.main.predx,-self.main.predData)
+		Menuaction.preddataplot(self.main)
+
+	def menupopup(self):
+		mousepos = win32api.GetCursorPos()
+		pos = QPoint(int(mousepos[0]),int(mousepos[1]))
+		self.menu.popup(pos)
+
+	def press(self,ev):
+		#region 생성
+		if self.no_drag:
+			frame = self.main.SignalFrame
+			self.vb = frame.PlotViewBox
+			
+			self.region=pg.LinearRegionItem()
+			self.main.SignalFrame.SignalPlot.addItem(self.region)
+			self.region.setMovable(False)
+
+			self.outregion=pg.LinearRegionItem()
+			self.main.SignalFrame.SignalPlot.addItem(self.outregion)
+			self.outregion.setMovable(False)
+
+			self.timestart = regionlinelabel(self.region.lines[0],self.main)
+			self.timeend = regionlinelabel(self.region.lines[1],self.main)
+			self.outstart = regionlinelabel(self.outregion.lines[0],self.main)
+			self.outend = regionlinelabel(self.outregion.lines[1],self.main)
+
+			self.timestart.setPosition(0.45)
+			self.timeend.setPosition(0.45)
+			self.outstart.setPosition(0.55)
+			self.outend.setPosition(0.55)
+
+			self.region.setBrush((218, 230, 228,20))
+			self.region.lines[0].setPen(pg.mkPen(color=(218, 230, 228,20),width=1))
+			self.region.lines[1].setPen(pg.mkPen(color=(218, 230, 228,20),width=1))
+			self.outregion.setBrush((218, 230, 228,20))				
+			self.outregion.lines[0].setPen(pg.mkPen(color=(218, 230, 228,20),width=1))
+			self.outregion.lines[1].setPen(pg.mkPen(color=(218, 230, 228,20),width=1))
+
+			self.no_drag = False
+
+
+		if ev.buttons() == Qt.LeftButton:
+			self.mousePress = True
+			self.regionstart = ev.pos()
+
+			if self.main.SignalFrame.PlotViewBox.CtrlPress == True :
+
+
+				if self.ctrl_start == False:
+					self.ctrl_start = True
+
+				self.regionend = ev.pos()
+				if self.start_copy == None:
+					self.start_copy = self.vb.mapToView(self.regionstart)
+
+				if self.start_copy.x() < self.regionend.x():
+
+					self.region.setRegion((self.start_copy.x(),self.vb.mapToView(self.regionend).x()))	
+					self.outregion.setRegion((int(self.start_copy.x()*self.main.unit)*self.main.Frequency,
+												math.ceil(self.vb.mapToView(self.regionend).x()*self.main.unit)*self.main.Frequency))
+				else:
+					self.region.setRegion((self.vb.mapToView(self.regionend).x(),self.start_copy.x()))
+					self.outregion.setRegion((int(self.vb.mapToView(self.regionend).x()*self.main.unit)*self.main.Frequency,
+											math.ceil(self.start_copy.x()*self.main.unit)*self.main.Frequency))
+					
+
+			elif self.main.SignalFrame.PlotViewBox.CtrlPress == False:
+				self.region.setRegion((self.vb.mapToView(self.regionstart).x(),self.vb.mapToView(self.regionstart).x()))
+				self.outregion.setRegion((int(self.vb.mapToView(self.regionstart).x()*self.main.unit)*self.main.Frequency,
+										math.ceil(self.vb.mapToView(self.regionstart).x()*self.main.unit)*self.main.Frequency))
+
+				
+			
+			if self.ctrl_start == False:
+				self.start_copy = self.vb.mapToView(self.regionstart)
+
+			self.on_drag = False
+
+		elif ev.button() == Qt.RightButton:
+			if self.on_drag and (self.z > 0.03):
+				self.detchangeaction.setEnabled(True)
+				self.predchangeaction.setEnabled(True)
+				self.menupopup()
+			else:
+				self.detchangeaction.setEnabled(False)
+				self.predchangeaction.setEnabled(False)
+				self.menupopup()
+
+		
+	def move(self,ev):
+		if self.main.SignalFrame.PlotViewBox.CtrlPress == False:
+			if self.mousePress:
+				if ev.buttons() == Qt.LeftButton:
+					self.regionend = ev.pos()
+					self.on_drag = True
+					if self.regionstart.x() < self.regionend.x():
+
+						self.region.setRegion((self.vb.mapToView(self.regionstart).x(),self.vb.mapToView(self.regionend).x()))	
+						self.outregion.setRegion((int(self.vb.mapToView(self.regionstart).x()*self.main.unit)*self.main.Frequency,
+													math.ceil(self.vb.mapToView(self.regionend).x()*self.main.unit)*self.main.Frequency))
+					else:
+						self.region.setRegion((self.vb.mapToView(self.regionstart).x(),self.vb.mapToView(self.regionend).x()))	
+						self.outregion.setRegion((math.ceil(self.vb.mapToView(self.regionstart).x()*self.main.unit)*self.main.Frequency,
+													int(self.vb.mapToView(self.regionend).x()*self.main.unit)*self.main.Frequency))
+			
+		elif self.main.SignalFrame.PlotViewBox.CtrlPress == True:
+			if self.mousePress:
+				if ev.buttons() == Qt.LeftButton:
+					self.regionend = ev.pos()
+					self.on_drag = True
+					if self.start_copy.x() < self.regionend.x():
+
+						self.region.setRegion((self.start_copy.x(),self.vb.mapToView(self.regionend).x()))	
+						self.outregion.setRegion((int(self.start_copy.x()*self.main.unit)*self.main.Frequency,
+													math.ceil(self.vb.mapToView(self.regionend).x()*self.main.unit)*self.main.Frequency))
+					else:
+						self.region.setRegion((self.vb.mapToView(self.regionend).x(),self.start_copy.x()))
+						self.outregion.setRegion((int(self.vb.mapToView(self.regionend).x()*self.main.unit)*self.main.Frequency,
+												math.ceil(self.start_copy.x()*self.main.unit)*self.main.Frequency))
+		self.z = abs(self.vb.mapToView(self.regionstart).x()-self.vb.mapToView(self.regionend).x())
+
+	def release(self,ev):
+		if ev.buttons() == Qt.LeftButton:
+			self.mousePress = False
+	def control_release(self):
+		self.ctrl_start = False
+
+
+>>>>>>> Stashed changes
 
 class childframe(QWidget):
 	def __init__(self,parent=None):
@@ -60,19 +316,193 @@ class childframe(QWidget):
 			for childwidget in self.ChildrenWidget:
 				childwidget.resize(self.ChildrenWidget_baseSize[i][0]*xSizeChangeRatio, self.ChildrenWidget_baseSize[i][1]*ySizeChangeRatio)
 				i=i+1
+<<<<<<< Updated upstream
+=======
+				"""
+				
+				childwidget.setGeometry((self.ChildrenWidget_baseSize[i][2]*xSizeChangeRatio),
+									(self.ChildrenWidget_baseSize[i][3]*ySizeChangeRatio),
+									math.ceil(self.ChildrenWidget_baseSize[i][0]*xSizeChangeRatio),
+									math.ceil(self.ChildrenWidget_baseSize[i][1]*ySizeChangeRatio))
+				i=i+1
+		
+		else:
+			self.setChildWidgetInfo()
+			self.initResized = True
+
+class fftframe(QWidget):
+	def __init__(self,parent=None):
+		super(fftframe,self).__init__(parent)
+		self.parent = parent
+		self.setWindowFlags(Qt.WindowStaysOnTopHint)
+		self.initResized = False
+		self.parent.xSizeChangeRatio =1
+		self.parent.ySizeChangeRatio =1
+		self.fail_to_close = False
+
+	
+	def setChildWidgetInfo(self):
+		self.ChildrenWidget = []
+
+		for widget in self.findChildren(QWidget):
+			self.ChildrenWidget.append(widget)
+
+		
+		self.FrameSize_width = self.geometry().width()
+		self.FrameSize_height = self.geometry().height()
+
+		self.ChildrenWidget_baseSize = []
+		for childwidget in self.ChildrenWidget:
+			#self.ChildrenWidget_baseSize.append([childwidget.size().width(),childwidget.size().height()])
+
+			self.ChildrenWidget_baseSize.append([childwidget.geometry().width() if childwidget.geometry().width()!=0 else 1,
+												childwidget.geometry().height() if childwidget.geometry().height()!=0 else 1,
+												childwidget.geometry().x(),
+												childwidget.geometry().y()])
+
+
+	def nativeEvent(self,eventType,message):
+		msg = ctypes.wintypes.MSG.from_address(message.__int__())
+		if eventType == "windows_generic_MSG":
+			if msg.message == win32con.WM_NCLBUTTONDOWN:
+				nHittest = int(msg.wParam)
+				if nHittest in [win32con.HTCAPTION,win32con.HTBOTTOM,win32con.HTBOTTOMLEFT,win32con.HTBOTTOMRIGHT,win32con.HTLEFT,win32con.HTRIGHT,win32con.HTTOP,win32con.HTTOPLEFT,win32con.HTTOPRIGHT]:
+					self.setChildWidgetInfo()
+
+		return False, 0
+	
+	
+	def resizeEvent(self,e):
+		if self.initResized:
+			self.parent.xSizeChangeRatio = (1+(self.geometry().width() - self.FrameSize_width ) / self.FrameSize_width)
+			self.parent.ySizeChangeRatio = (1+(self.geometry().height() - self.FrameSize_height )/ self.FrameSize_height)
+			i=0
+
+			for childwidget in self.ChildrenWidget:
+				if str(type(childwidget)) == "<class 'show_fft_function.scalebutton'>":
+					childwidget.setGeometry((self.ChildrenWidget_baseSize[i][2]*self.parent.xSizeChangeRatio),
+										(self.geometry().height()-30),
+										math.ceil(self.ChildrenWidget_baseSize[i][0]*self.parent.xSizeChangeRatio),
+										math.ceil(self.ChildrenWidget_baseSize[i][1]*self.parent.ySizeChangeRatio))
+				else:
+					childwidget.setGeometry((self.ChildrenWidget_baseSize[i][2]*self.parent.xSizeChangeRatio),
+										(self.ChildrenWidget_baseSize[i][3]*self.parent.ySizeChangeRatio),
+										math.ceil(self.ChildrenWidget_baseSize[i][0]*self.parent.xSizeChangeRatio),
+										math.ceil(self.ChildrenWidget_baseSize[i][1]*self.parent.ySizeChangeRatio))
+				i=i+1
+		
+>>>>>>> Stashed changes
 		else:
 			self.setChildWidgetInfo()
 			self.initResized = True
 	
+<<<<<<< Updated upstream
 
 
 
 
+=======
+class signalframe(QWidget):
+	def __init__(self,parent=None):
+		super(signalframe,self).__init__(parent)
+		self.parent = parent
+		self.setWindowFlags(Qt.WindowStaysOnTopHint)
+		self.initResized = False
+		self.rbtnlist = mkrbtnlist(self.parent)
+		self.msgbox = QMessageBox(self)
+		self.parent.sigexist = True
+		self.fail_to_close = False
+	
+	def setChildWidgetInfo(self):
+		self.ChildrenWidget = []
+
+		for widget in self.findChildren(QWidget):
+			if not 'label' in str(widget).lower():
+				self.ChildrenWidget.append(widget)
+
+		
+		self.FrameSize_width = self.frameGeometry().width()
+		self.FrameSize_height = self.frameGeometry().height()
+
+		self.ChildrenWidget_baseSize = []
+		for childwidget in self.ChildrenWidget:
+			#self.ChildrenWidget_baseSize.append([childwidget.size().width(),childwidget.size().height()])
+			self.ChildrenWidget_baseSize.append([childwidget.size().width() if childwidget.size().width()!=0 else 1,
+												childwidget.size().height() if childwidget.size().height()!=0 else 1,
+												childwidget.geometry().x(),
+												childwidget.geometry().y()])
+
+	def closeEvent(self,e):
+		self.parent.memobox.close()
+		ok = self.msgbox.question(self, 'Save', 'Save All Changes?', QMessageBox.Yes | QMessageBox.No)
+		if ok:
+			
+
+			headers = ['det','pred']
+			df = pd.DataFrame(list(zip(self.parent.detData,self.parent.predData)),columns=headers)
+			if hasattr(self.parent,'dpPath'):
+				df.to_csv(self.parent.dpPath,mode='w',index=False)
+			else:
+				df.to_csv('./detpred/'+'dp_'+self.parent.edfname[:-4]+'_save'+'.csv',mode='w',index=False)
+			a = self.saveF()
+			if a==-1:
+				self.fail_to_close=True
+				e.ignore()
+			else:
+				self.fail_to_close=False
+
+			self.parent.sigexist=False
+		self.deleteLater()
+
+
+
+	def nativeEvent(self,eventType,message):
+		msg = ctypes.wintypes.MSG.from_address(message.__int__())
+		if eventType == "windows_generic_MSG":
+			if msg.message == win32con.WM_NCLBUTTONDOWN:
+				nHittest = int(msg.wParam)
+				if nHittest in [win32con.HTCAPTION,win32con.HTBOTTOM,win32con.HTBOTTOMLEFT,win32con.HTBOTTOMRIGHT,win32con.HTLEFT,win32con.HTRIGHT,win32con.HTTOP,win32con.HTTOPLEFT,win32con.HTTOPRIGHT]:
+					self.setChildWidgetInfo()
+
+		return False, 0
+			
+	def resizeEvent(self,e):
+		xSizeChangeRatio =1
+		ySizeChangeRatio =1
+		if self.initResized:
+			xSizeChangeRatio = (1+(e.size().width() - self.FrameSize_width ) / self.FrameSize_width)
+			ySizeChangeRatio = (1+(e.size().height() - self.FrameSize_height )/ self.FrameSize_height)
+			i=0
+			for childwidget in self.ChildrenWidget:
+				
+				#childwidget.resize(self.ChildrenWidget_baseSize[i][0]*xSizeChangeRatio, self.ChildrenWidget_baseSize[i][1]*ySizeChangeRatio)
+				#i=i+1
+
+				
+				childwidget.setGeometry((self.ChildrenWidget_baseSize[i][2]*xSizeChangeRatio),
+									(self.ChildrenWidget_baseSize[i][3]*ySizeChangeRatio),
+									math.ceil(self.ChildrenWidget_baseSize[i][0]*xSizeChangeRatio),
+									math.ceil(self.ChildrenWidget_baseSize[i][1]*ySizeChangeRatio))
+				i=i+1
+
+
+
+		else:
+			self.setChildWidgetInfo()
+			self.initResized = True
+	
+>>>>>>> Stashed changes
 
 def mkSignalWindow(self):
 
 	def viewbox_resized(viewbox):
+		viewbox_pos_x = viewbox.geometry().x()
+		viewbox_pos_y = viewbox.geometry().y()
+		viewbox_height = viewbox.size().height()
+		main_height = self.parent.geometry().height()
+		space = viewbox_height/(self.parent.Ch_num+1)
 		if not self.parent.Resized:
+<<<<<<< Updated upstream
 			viewbox_pos_x = viewbox.geometry().x()
 			viewbox_pos_y = viewbox.geometry().y()
 			viewbox_height = viewbox.size().height()
@@ -101,8 +531,27 @@ def mkSignalWindow(self):
 
 		
 
+=======
+			self.lbl_list = []
+			for i in range(self.parent.Ch_num):
+				lbl = QLabel(parent=self)
+				self.lbl_list.append(lbl)
+				lbl.setText(self.parent.Selected_Chs[self.parent.Ch_num - i - 1])
+				lbl.setGeometry(10,(viewbox_pos_y+10)+(i+1)*space-8,50,20)
+				lbl.setMaximumHeight(16)
+				lbl.setMinimumHeight(16)
+				lbl.setWindowFlags(Qt.WindowStaysOnTopHint)
+				lbl.setFixedWidth(lbl.sizeHint().width())
+				lbl.setScaledContents(True)
+				lbl.setStyleSheet('color:yellow; background:#333333')
+				lbl.show()
+>>>>>>> Stashed changes
 
 			self.parent.Resized = True
+		else:
+			for i in range(len(self.lbl_list)):
+				self.lbl_list[i].setGeometry(10,(viewbox_pos_y+10)+(i+1)*space-8,50,20)
+				self.lbl_list[i].updateGeometry()
 
 	self.parent.signal_frame_width = self.frameGeometry().width()
 	self.parent.signal_frame_height = self.frameGeometry().height()
@@ -189,6 +638,7 @@ def mkSignalWindow(self):
 
 	# Move event trigger
 	proxy = QGraphicsProxyWidget()
+<<<<<<< Updated upstream
 	button_left = QPushButton()
 	icon_left = QIcon('oneleft.png')
 	button_left.setIcon(icon_left)
@@ -207,6 +657,23 @@ def mkSignalWindow(self):
 	button_left_u = QPushButton()
 	icon_left_u = QIcon('twoleft.png')
 	button_left_u.setIcon(icon_left_u)
+=======
+	button_left = QPushButton("<")
+	button_left.setMaximumWidth(self.parent.signal_frame_width//32)
+
+	proxy2 = QGraphicsProxyWidget()
+	button_right = QPushButton('>')
+	button_right.setMaximumWidth(self.parent.signal_frame_width//32)
+
+	proxy3 = QGraphicsProxyWidget()
+	button_right_u = QPushButton('>>')
+	button_right_u.setMaximumWidth(self.parent.signal_frame_width//32)
+
+	proxy4 = QGraphicsProxyWidget()
+	button_left_u = QPushButton("<<")
+	button_left_u.setMaximumWidth(self.parent.signal_frame_width//32)
+
+>>>>>>> Stashed changes
 
 	textproxy = QGraphicsProxyWidget()
 	self.textbox1 = QLineEdit()
@@ -218,6 +685,10 @@ def mkSignalWindow(self):
 	
 	self.textbox1.setText("%d:%d:%.2f"%(self.parent.playtime//3600,(self.parent.playtime%3600)//60,((self.parent.playtime)%3600)%60))
 	self.textbox2.setText("%d:%d:%.2f"%((self.parent.playtime+self.parent.TimeScale)//3600,((self.parent.playtime+self.parent.TimeScale)%3600)//60,((self.parent.playtime+self.parent.TimeScale)%3600)%60))
+<<<<<<< Updated upstream
+=======
+	self.textbox3.setText('Timescale: %.2f sec'%(self.parent.TimeScale) if self.parent.TimeScale//60 == 0 else 'Timescale: %dmin %dsec'%(self.parent.TimeScale/60,self.parent.TimeScale%60))
+>>>>>>> Stashed changes
 
 
 	
@@ -228,15 +699,24 @@ def mkSignalWindow(self):
 	textproxy.setWidget(self.textbox1)
 	textproxy2.setWidget(self.textbox2)
 
+<<<<<<< Updated upstream
 	self.TestButton = self.SignalWindow.addLayout(row=2,col=0)
 	self.spaceLayout = self.SignalWindow.addLayout(row=2,col=1,colspan=8)
 	self.spaceLayout.setMaximumHeight(40)
 	self.TestButton.setMaximumHeight(40)
 	self.TestButton.setMaximumWidth(160)
+=======
+	self.TestButton = self.SignalWindow.addLayout(row=3,col=0)
+	self.spaceLayout = self.SignalWindow.addLayout(row=3,col=1,colspan=3)
+	self.spaceLayout.setMaximumHeight(30)
+	self.TestButton.setMaximumHeight(30)
+	self.TestButton.setMaximumWidth(self.parent.signal_frame_width//8)
+>>>>>>> Stashed changes
 	self.TestButton.addItem(proxy)
 	self.TestButton.addItem(proxy2)
 	self.TestButton.addItem(proxy3)
 	self.TestButton.addItem(proxy4)
+<<<<<<< Updated upstream
 	self.textlayout = self.SignalWindow.addLayout(row=1,col=0)
 	self.spacelayout = self.SignalWindow.addLayout(row=1,col=1,colspan=7)
 	self.spacelayout.setMaximumHeight(40)
@@ -245,6 +725,26 @@ def mkSignalWindow(self):
 	self.textlayout.setMaximumWidth(100)
 	self.textlayout2.setMaximumHeight(40)
 	self.textlayout2.setMaximumWidth(100)
+=======
+
+	self.textlayout = self.SignalWindow.addLayout(row=2,col=0)
+	self.spacelayout = self.SignalWindow.addLayout(row=2,col=1,colspan=3)
+	self.spacelayout.setMaximumHeight(30)
+
+	self.textlayout3= self.SignalWindow.addLayout(row=2,col=4)
+
+	self.spacelayout = self.SignalWindow.addLayout(row=2,col=5,colspan=3)
+	self.spacelayout.setMaximumHeight(30)
+
+	self.textlayout2= self.SignalWindow.addLayout(row=2,col=8)
+
+	self.textlayout.setMaximumHeight(30)
+	self.textlayout.setMaximumWidth(self.parent.signal_frame_width//8)
+	self.textlayout2.setMaximumHeight(30)
+	self.textlayout2.setMaximumWidth(self.parent.signal_frame_width//8)
+	self.textlayout3.setMaximumHeight(30)
+	self.textlayout3.setMaximumWidth(self.parent.signal_frame_width//8)
+>>>>>>> Stashed changes
 	self.textlayout.addItem(textproxy)
 	self.textlayout2.addItem(textproxy2)
 
@@ -272,7 +772,7 @@ def mkSignalWindow(self):
 					if self.frame.parent.ck_load[current_duration_index + i] == 0:
 						start_duration_index = current_duration_index + i
 						break
-					i = i +1
+					i = i + 1
 				start = int(start_duration_index * self.frame.parent.duration * self.frame.parent.Frequency)
 				
 				if self.frame.parent.duration * self.frame.parent.EDF.datarecords_in_file < self.frame.parent.playtime+self.frame.parent.TimeScale*2:
@@ -301,14 +801,26 @@ def mkSignalWindow(self):
 					start_duration_index = 0
 				start = int(start_duration_index * self.frame.parent.duration * self.frame.parent.Frequency)
 
+<<<<<<< Updated upstream
  			######################   플로팅   ##########################
+=======
+			######################	플로팅	##########################
+			data_total = 0
+			plot_total = 0
+>>>>>>> Stashed changes
 			if start < end:
 				xdata = list(range(start,end))
 
 				for i in range(self.frame.parent.Ch_num):
 					ch_index = self.frame.parent.Selected_Channels_index[i]
+					
+					pstart = time.time()
 					ydata = (list(self.frame.parent.EDF.readSignal(ch_index,start,end-start)+i*100))
+					data_total += time.time()-pstart
+					
+					pstart = time.time()
 					inst = self.frame.SignalPlot.plot(x = xdata,y = ydata,pen=pen)
+					plot_total += time.time()-pstart
 					inst.start_duration = start_duration_index
 					inst.end_duration = end_duration_index
 
@@ -325,7 +837,6 @@ def mkSignalWindow(self):
 			
 				for i in range(start_duration_index,end_duration_index+1):
 					self.frame.parent.ck_load[i] = 1
-			
 			##### 삭제 ####	
 			itemlist = self.frame.SignalPlot.allChildItems()
 			for i in range(int(len(itemlist))):
@@ -341,6 +852,7 @@ def mkSignalWindow(self):
 				if hasattr(itemlist[i],'time'):
 					if (self.frame.parent.playtime - self.frame.parent.TimeScale*2) > itemlist[i].time or (self.frame.parent.playtime + self.frame.parent.TimeScale*3) < itemlist[i].time:
 						self.frame.SignalPlot.removeItem(itemlist[i])
+
 
 					
 	class LineUpdate(QObject):
@@ -400,7 +912,14 @@ def mkSignalWindow(self):
 		self.textbox1.setText("%d:%d:%.2f"%(self.parent.playtime//3600,(self.parent.playtime%3600)//60,((self.parent.playtime)%3600)%60))
 		self.textbox2.setText("%d:%d:%.2f"%((self.parent.playtime+self.parent.TimeScale)//3600,((self.parent.playtime+self.parent.TimeScale)%3600)//60,
 			((self.parent.playtime+self.parent.TimeScale)%3600)%60))
+<<<<<<< Updated upstream
 
+=======
+		self.textbox3.setText('Timescale: %.2f sec'%(self.parent.TimeScale) if self.parent.TimeScale//60 == 0 else 'Timescale: %dmin %dsec'%(self.parent.TimeScale/60,self.parent.TimeScale%60))
+			
+		if not self.sb.isSliderDown():
+			self.sb.setSliderPosition(self.parent.playtime)
+>>>>>>> Stashed changes
 	# self = button 클래스임
 	def viewrange_changed(self):
 		cur_TimeScale = ((self.viewRange()[0][1]-self.viewRange()[0][0])/self.frame.parent.Frequency)//self.frame.parent.unit/self.frame.parent.Frequency
@@ -508,15 +1027,19 @@ def mkChannelSelect(self):
 			self.Main.DPFrame = childframe(self.Main)
 			self.Main.SignalFrame.setGeometry(0,20,
 											self.Main.geometry().width(),
+<<<<<<< Updated upstream
 											self.Main.geometry().height()*0.8-20)
+=======
+											self.Main.geometry().height()*0.88-self.Main.menubar.height())
+>>>>>>> Stashed changes
 			self.Main.DPNameFrame.setGeometry(0,
-											self.Main.geometry().height()*0.8,
+											self.Main.geometry().height()*0.88,
 											self.Main.geometry().width()*1/24,
-											self.Main.geometry().height()*0.2)
+											self.Main.geometry().height()*0.12)
 			self.Main.DPFrame.setGeometry(self.Main.geometry().width()*1/24,
-										self.Main.geometry().height()*0.8,
+										self.Main.geometry().height()*0.88,
 										self.Main.geometry().width()*23/24,
-										self.Main.geometry().height()*0.2)
+										self.Main.geometry().height()*0.12)
 			mkSignalWindow(self.Main.SignalFrame)
 			timelinetest.detPredBar(self.Main.DPFrame)
 			timelinetest.dfname(self.Main.DPNameFrame)

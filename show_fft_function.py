@@ -25,6 +25,76 @@ import win32con
 import ctypes.wintypes
 import numpy as np
 
+<<<<<<< Updated upstream
+=======
+
+class RFbutton(QPushButton):
+	def __init__ (self,parent):
+		super(RFbutton,self).__init__(parent)
+		self.frame = parent
+		self.initUI()
+		self.frame.button_change = 0  # fixed = 0 , relative = 1
+		self.clicked.connect(self.btn_clicked)
+		self.fail_to_close = False
+
+
+
+	def initUI(self):
+		self.setText("F")
+		self.setGeometry(5,5,25,25)
+		self.setMinimumWidth(20)
+		self.setMinimumHeight(20)
+		self.setMaximumWidth(25)
+		self.setMaximumHeight(25)
+
+
+	def btn_clicked(self):
+		if self.frame.button_change == 0: #0 == Fixed
+			self.R_state()
+		else:
+			self.F_state()
+	
+	def R_state(self):
+		self.frame.button_change = 1
+		self.setText("R")
+
+		data = make_data(self.frame.parent,self.frame.parent.EDF)
+		maxpsd = max(data.psd)
+		self.frame.plt1.setYRange(0,maxpsd)
+		self.frame.plt1.setLimits(minXRange=50,maxXRange=50,xMin=0,xMax=100,yMin=0)
+
+	def F_state(self):
+		self.frame.button_change = 0
+		self.setText("F")
+
+		maxpsd = self.frame.maxpsd
+		self.frame.plt1.setYRange(0,maxpsd)
+		self.frame.plt1.setLimits(minXRange=50,maxXRange=50,xMin=0,xMax=100,yMin=0)
+
+class scalebutton(QPushButton):
+	def __init__ (self,parent):
+		super(scalebutton,self).__init__(parent)
+		self.frame = parent	
+		self.initUI()
+		self.clicked.connect(self.showDialog)
+
+	def initUI(self):
+		self.setText("Max PSD")
+		self.setGeometry(5,self.frame.frameGeometry().height()-30,120,25)
+		self.setMinimumWidth(100)
+		self.setMaximumWidth(120)
+		self.setFixedHeight(25)
+
+	def showDialog(self):
+		setpsd, ok = QInputDialog.getDouble(self, 'Set Scale','Current Scale: '+str(self.frame.maxpsd))
+
+		if ok:
+			self.frame.maxpsd = setpsd
+			self.frame.btn.F_state()
+
+
+
+>>>>>>> Stashed changes
 def getplaytimechanged(self):
 	data = make_data(self,self.EDF)
 	self.FFTFrame.plt1.p.setData(data.bins,data.psd)
@@ -81,3 +151,10 @@ def show_fft(parent,data):
 	parent.plt1.setLimits(minXRange=50,maxXRange=50,xMin=0,xMax=100,yMin=0,yMax=5+parent.maxpsd)
 	parent.plt1.setMouseEnabled(x=False,y=False)
 	parent.plt1.p = parent.plt1.plot(data.bins,data.psd,stepMode=True, fillLevel=0, brush=(0,0,0,150),pen=pg.mkPen(color='g',width=0.6))
+<<<<<<< Updated upstream
+=======
+
+
+	parent.btn = RFbutton(parent)
+	parent.btn2 = scalebutton(parent)
+>>>>>>> Stashed changes
