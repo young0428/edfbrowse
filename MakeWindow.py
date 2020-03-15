@@ -771,6 +771,7 @@ def mkSignalWindow(self):
 				while True:
 					if self.frame.parent.ck_load[current_duration_index + i] == 0:
 						start_duration_index = current_duration_index + i
+	
 						break
 					i = i + 1
 				start = int(start_duration_index * self.frame.parent.duration * self.frame.parent.Frequency)
@@ -1033,6 +1034,7 @@ def mkChannelSelect(self):
 											self.Main.geometry().height()*0.88-self.Main.menubar.height())
 >>>>>>> Stashed changes
 			self.Main.DPNameFrame.setGeometry(0,
+<<<<<<< HEAD
 											self.Main.geometry().height()*0.88,
 											self.Main.geometry().width()*1/24,
 											self.Main.geometry().height()*0.12)
@@ -1040,6 +1042,15 @@ def mkChannelSelect(self):
 										self.Main.geometry().height()*0.88,
 										self.Main.geometry().width()*23/24,
 										self.Main.geometry().height()*0.12)
+=======
+											self.Main.geometry().height()*0.8,
+											self.Main.geometry().width()*1/25,
+											self.Main.geometry().height()*0.2)
+			self.Main.DPFrame.setGeometry(self.Main.geometry().width()*1/25,
+										self.Main.geometry().height()*0.8,
+										self.Main.geometry().width()*24/25,
+										self.Main.geometry().height()*0.2)
+>>>>>>> parent of f499a00... Merge branch 'design' into Thisss
 			mkSignalWindow(self.Main.SignalFrame)
 			timelinetest.detPredBar(self.Main.DPFrame)
 			timelinetest.dfname(self.Main.DPNameFrame)
